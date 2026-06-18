@@ -1,0 +1,45 @@
+---
+const links = [
+  { href: '/#skills', label: 'Skills' },
+  { href: '/#projects', label: 'Projects' },
+  { href: '/blog', label: 'Writeups' },
+  { href: '/#experience', label: 'Experience' },
+  { href: '/#contact', label: 'Contact' },
+];
+---
+<header class="site">
+  <div class="wrap nav">
+    <a href="/" class="brand">Marco Fernstaedt</a>
+    <div class="nav-right">
+      <ul class="nav-links" id="navlinks">
+        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Switch theme">Theme</button>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="navlinks">Menu</button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle?.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
+
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.getElementById('navlinks');
+  navToggle?.addEventListener('click', () => {
+    const open = navLinks?.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  navLinks?.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.tagName === 'A') {
+      navLinks.classList.remove('open');
+      navToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>

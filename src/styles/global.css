@@ -1,0 +1,183 @@
+/* ---- Theme tokens ---- */
+:root,
+[data-theme="dark"] {
+  --bg: #131417;
+  --bg-2: #1b1d22;
+  --ink: #e7e4dc;
+  --ink-soft: #a6a9a4;
+  --line: #2c2f36;
+  --accent: #34c2b9;
+  --accent-deep: #5fd6cd;
+  --signal: #e0772f;
+  --card-tint: rgba(52,194,185,0.10);
+}
+[data-theme="light"] {
+  --bg: #f6f4ee;
+  --bg-2: #efece3;
+  --ink: #15191c;
+  --ink-soft: #43504f;
+  --line: #d8d3c6;
+  --accent: #0c6e6a;
+  --accent-deep: #094f4c;
+  --signal: #b4541b;
+  --card-tint: rgba(12,110,106,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+body {
+  font-family: "IBM Plex Sans", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.skip-link {
+  position: absolute; left: -999px; top: 0;
+  background: var(--ink); color: var(--bg);
+  padding: 12px 18px; z-index: 200; border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+a { color: var(--accent-deep); }
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--signal); outline-offset: 3px; border-radius: 2px;
+}
+.wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+.mono {
+  font-family: "IBM Plex Mono", monospace;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  font-size: 0.72rem; color: var(--accent);
+}
+
+/* ---- Header ---- */
+header.site {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.nav { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+.brand {
+  font-family: "Fraunces", serif; font-weight: 600; font-size: 1.15rem;
+  text-decoration: none; color: var(--ink);
+}
+.nav-right { display: flex; align-items: center; gap: 22px; }
+.nav-links { display: flex; gap: 24px; list-style: none; align-items: center; }
+.nav-links a { text-decoration: none; color: var(--ink-soft); font-size: 0.92rem; font-weight: 500; }
+.nav-links a:hover { color: var(--accent); }
+.theme-toggle, .nav-toggle {
+  background: none; border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 12px; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem;
+  color: var(--ink); cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.theme-toggle:hover, .nav-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.nav-toggle { display: none; }
+
+/* ---- Hero ---- */
+.hero { padding: 88px 0 64px; border-bottom: 1px solid var(--line); }
+.hero h1 {
+  font-family: "Fraunces", serif; font-weight: 600;
+  font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05;
+  letter-spacing: -0.01em; margin: 14px 0 8px;
+}
+.hero .role { font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--accent); font-weight: 600; margin-bottom: 22px; }
+.hero p.intro { font-size: 1.12rem; color: var(--ink-soft); max-width: 60ch; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+.btn {
+  display: inline-block; text-decoration: none;
+  padding: 13px 22px; border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+  border: 1.5px solid var(--ink); color: var(--ink);
+}
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); color: #08110f; }
+.btn.ghost:hover { background: var(--bg-2); }
+
+/* ---- Sections ---- */
+section { padding: 70px 0; border-bottom: 1px solid var(--line); }
+.sec-head { margin-bottom: 38px; }
+.sec-head h2 {
+  font-family: "Fraunces", serif; font-weight: 600;
+  font-size: clamp(1.7rem, 4vw, 2.4rem); margin-top: 8px; letter-spacing: -0.01em;
+}
+.sec-head p { color: var(--ink-soft); margin-top: 8px; max-width: 62ch; }
+
+/* ---- Skills ---- */
+.skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.skill-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.skill-card h3 { font-size: 0.98rem; margin-bottom: 10px; }
+.skill-card ul { list-style: none; }
+.skill-card li { color: var(--ink-soft); padding: 3px 0; font-size: 0.95rem; }
+
+/* ---- Projects ---- */
+.projects { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+.project { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 26px; display: flex; flex-direction: column; }
+.project h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.3rem; margin: 10px 0 6px; }
+.project .what { color: var(--ink-soft); font-size: 0.96rem; margin-bottom: 14px; flex-grow: 1; }
+.project .outcome { font-size: 0.9rem; padding: 10px 14px; background: var(--card-tint); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 16px; }
+.project .links { display: flex; gap: 16px; }
+.project .links a { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ---- Writeups list ---- */
+.writeups { list-style: none; border-top: 1px solid var(--line); }
+.writeups li { border-bottom: 1px solid var(--line); }
+.writeups a { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; padding: 20px 4px; text-decoration: none; color: var(--ink); }
+.writeups a:hover { color: var(--accent); }
+.writeups .title { font-weight: 600; font-size: 1.08rem; }
+.writeups .tag { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+.writeups .arrow { margin-left: auto; color: var(--accent); }
+
+/* ---- Experience ---- */
+.xp { display: grid; gap: 22px; }
+.xp-item { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 24px 26px; }
+.xp-item .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.xp-item h3 { font-size: 1.12rem; }
+.xp-item .when { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--ink-soft); }
+.xp-item ul { margin: 12px 0 0 18px; color: var(--ink-soft); }
+.xp-item li { padding: 3px 0; }
+.note { margin-top: 22px; color: var(--ink-soft); font-size: 0.95rem; }
+
+/* ---- Contact ---- */
+.contact-box { background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; padding: 48px 40px; text-align: center; }
+.contact-box h2 { font-family: "Fraunces", serif; font-size: clamp(1.6rem, 4vw, 2.3rem); margin-bottom: 14px; }
+.contact-box p { color: var(--ink-soft); max-width: 50ch; margin: 0 auto 26px; }
+.contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 28px; }
+.contact-links a { font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+
+footer.site { padding: 34px 0; text-align: center; color: var(--ink-soft); font-size: 0.85rem; }
+
+/* ---- Blog index + prose ---- */
+.prose { max-width: 70ch; padding-top: 56px; padding-bottom: 70px; }
+.prose h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 10px 0 6px; }
+.prose h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.5rem; margin: 34px 0 10px; }
+.prose h3 { font-size: 1.15rem; margin: 26px 0 8px; }
+.prose p { margin: 14px 0; color: var(--ink); }
+.prose ul, .prose ol { margin: 14px 0 14px 22px; color: var(--ink); }
+.prose li { padding: 4px 0; }
+.prose code { font-family: "IBM Plex Mono", monospace; background: var(--bg-2); padding: 2px 6px; border-radius: 5px; font-size: 0.9em; }
+.prose pre { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 18px; overflow-x: auto; margin: 18px 0; }
+.prose pre code { background: none; padding: 0; }
+.post-meta { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 18px; }
+.back { margin-top: 40px; }
+.blog-list { list-style: none; }
+
+@media (max-width: 760px) {
+  .skills-grid, .projects { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex; position: absolute; top: 66px; left: 0; right: 0;
+    flex-direction: column; gap: 0; background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  .nav-links.open li { width: 100%; }
+  .nav-links.open a { display: block; padding: 16px 24px; border-top: 1px solid var(--line); }
+  .nav-toggle { display: block; }
+}
+
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }

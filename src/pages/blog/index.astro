@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<BaseLayout title="Writeups | Marco Fernstaedt" description="Troubleshooting writeups and a help desk knowledge base.">
+  <section style="border-bottom:none;">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">Knowledge base</p>
+        <h2>Troubleshooting writeups</h2>
+        <p>Step by step guides for the issues a service desk handles every day.</p>
+      </div>
+      <ul class="writeups blog-list">
+        {posts.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}`}>
+              <span class="tag">{post.data.category}</span>
+              <span class="title">{post.data.title}</span>
+              <span class="arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,197 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const GITHUB = 'https://github.com/marcofernstaedt';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 5);
+
+const projects = [
+  {
+    tag: 'Active Directory',
+    title: 'Domain controller and Group Policy lab',
+    what: 'Stood up a Windows Server domain, managed users, OUs, and security groups, and handled password resets, lockouts, and unlocks both in the console and through the PowerShell Active Directory module.',
+    outcome: 'Automated bulk account tasks with PowerShell, cutting repetitive setup to a single command.',
+  },
+  {
+    tag: 'Microsoft 365 and Entra ID',
+    title: 'Cloud identity administration',
+    what: 'Configured a Microsoft 365 tenant and managed accounts, licenses, and groups, including password resets, multi factor authentication, and basic mailbox tasks for end users.',
+    outcome: 'Built a repeatable onboarding and offboarding checklist for new and departing users.',
+  },
+  {
+    tag: 'Ticketing and ITSM',
+    title: 'Service desk ticket workflow',
+    what: 'Built a working ticket queue with categories, priorities, and service level targets, then logged, triaged, resolved, and documented tickets following a standard support process.',
+    outcome: 'Triage rules routed common requests automatically, keeping first response inside target.',
+  },
+  {
+    tag: 'Documentation',
+    title: 'Help desk knowledge base',
+    what: 'Wrote clear, step by step articles for the issues that fill a Tier 1 queue, from password resets and account lockouts to Outlook, printing, and VPN access.',
+    outcome: 'Plain language guides any user can follow, reducing repeat tickets on the same issues.',
+  },
+];
+---
+<BaseLayout title="Marco Fernstaedt — IT Support and Service Desk">
+  <section class="hero" aria-labelledby="hero-name" style="border-top:none;">
+    <div class="wrap">
+      <p class="mono">IT Support / Service Desk / Phoenix, Arizona</p>
+      <h1 id="hero-name">I keep people working when their tech stops.</h1>
+      <p class="role">Help Desk and Service Desk Technician</p>
+      <p class="intro">
+        I resolve end user issues across Windows and Linux, manage accounts and access in Active Directory and
+        Microsoft 365, and write the documentation that stops the same ticket coming back. Years of high volume
+        customer support, plus a deep background in screen reader and assistive technology, so I support every kind
+        of user with patience and clarity.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Email me</a>
+        <a class="btn ghost" href="#projects">See my work</a>
+        <a class="btn ghost" href={GITHUB}>GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" aria-labelledby="skills-h" class="reveal">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">What I work with</p>
+        <h2 id="skills-h">Skills</h2>
+      </div>
+      <div class="skills-grid">
+        <div class="skill-card">
+          <h3>Accounts and access</h3>
+          <ul>
+            <li>Active Directory users, groups, and OUs</li>
+            <li>Password resets, lockouts, and unlocks</li>
+            <li>Group Policy</li>
+            <li>Microsoft 365 and Entra ID, licenses, MFA</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Support and ticketing</h3>
+          <ul>
+            <li>Service desk workflows and triage</li>
+            <li>Ticket prioritization and SLAs</li>
+            <li>Knowledge base documentation</li>
+            <li>Remote support</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Systems and networking</h3>
+          <ul>
+            <li>Windows 10 and 11, Windows Server</li>
+            <li>Linux, Ubuntu and Debian</li>
+            <li>DNS, DHCP, VPN, SSH</li>
+            <li>PowerShell, Bash, Python</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>People and accessibility</h3>
+          <ul>
+            <li>High volume phone and CRM support</li>
+            <li>Clear communication with non technical users</li>
+            <li>NVDA, JAWS, and Orca screen readers</li>
+            <li>Accessibility troubleshooting</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" aria-labelledby="projects-h" class="reveal">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">Built and documented</p>
+        <h2 id="projects-h">Projects</h2>
+        <p>Hands on labs that mirror real service desk work. Configs and scripts live on GitHub, full writeups are linked from each.</p>
+      </div>
+      <div class="projects">
+        {projects.map((p) => (
+          <article class="project">
+            <p class="mono">{p.tag}</p>
+            <h3>{p.title}</h3>
+            <p class="what">{p.what}</p>
+            <p class="outcome">{p.outcome}</p>
+            <div class="links">
+              <a href={GITHUB}>View on GitHub</a>
+              <a href="/blog">Read writeup</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="writeups" aria-labelledby="writeups-h" class="reveal">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">Knowledge base</p>
+        <h2 id="writeups-h">Troubleshooting writeups</h2>
+        <p>Short, clear guides for the issues a service desk sees every day. This is where the documentation skill lives.</p>
+      </div>
+      <ul class="writeups">
+        {posts.map((post) => (
+          <li>
+            <a href={`/blog/${post.id}`}>
+              <span class="tag">{post.data.category}</span>
+              <span class="title">{post.data.title}</span>
+              <span class="arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section id="experience" aria-labelledby="experience-h" class="reveal">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">Where I have worked and practiced</p>
+        <h2 id="experience-h">Experience</h2>
+      </div>
+      <div class="xp">
+        <div class="xp-item">
+          <div class="top">
+            <h3>Customer Experience (CX) Associate, AnywhereWorks (Remote)</h3>
+            <span class="when">Dec 2024 — Present</span>
+          </div>
+          <ul>
+            <li>Resolve customer issues in a high volume support environment, aiming for first contact resolution.</li>
+            <li>Document interactions in CRM software and follow structured escalation processes.</li>
+            <li>Keep a calm, clear manner with frustrated and non technical customers.</li>
+          </ul>
+        </div>
+        <div class="xp-item">
+          <div class="top">
+            <h3>IT Support, Self Directed Home Lab</h3>
+            <span class="when">2024 — Present</span>
+          </div>
+          <ul>
+            <li>Run an ongoing home lab to practice real help desk tasks across Windows and Linux, documenting every build and fix.</li>
+            <li>Administer Active Directory and a Microsoft 365 tenant, including password resets, lockouts, and access changes.</li>
+            <li>Operate a multi machine Linux environment with secure remote access, automated backups, and scripting.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">CompTIA Network+ in progress, target July 2026. Kofa High School.</p>
+    </div>
+  </section>
+
+  <section id="contact" aria-labelledby="contact-h" style="border-bottom:none;">
+    <div class="wrap">
+      <div class="contact-box">
+        <h2 id="contact-h">Let's talk about your service desk</h2>
+        <p>Open to help desk and service desk roles, remote or in the Phoenix area. The fastest way to reach me is email or phone.</p>
+        <div class="contact-links">
+          <a href="mailto:fernstaedtmarco@gmail.com">fernstaedtmarco@gmail.com</a>
+          <a href="tel:+19282569277">928 256 9277</a>
+          <a href={GITHUB}>github.com/marcofernstaedt</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

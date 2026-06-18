@@ -1,0 +1,17 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+const { frontmatter } = Astro.props;
+const date = new Date(frontmatter.pubDate).toLocaleDateString('en-US', {
+  year: 'numeric', month: 'long', day: 'numeric',
+});
+---
+<BaseLayout title={frontmatter.title + ' | Marco Fernstaedt'} description={frontmatter.description}>
+  <article class="prose wrap">
+    <p class="mono">{frontmatter.category}</p>
+    <h1>{frontmatter.title}</h1>
+    <p class="post-meta">{date}</p>
+    <slot />
+    <p class="back"><a href="/blog">&larr; All writeups</a></p>
+  </article>
+</BaseLayout>
