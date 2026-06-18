@@ -1,85 +1,95 @@
 ---
-title: "What a Wireshark Packet Capture Lab Teaches Before the Capture Even Works"
-description: "A practical packet capture lab note about DNS and ICMP traffic generation, filters, and the capture-permission blocker that must be solved before claiming packet evidence."
+title: "I Captured My Own Network Traffic and Found Two Security Gaps"
+description: "A completed Wireshark homelab project analyzing real DNS, TCP, TLS, and Tailscale traffic, with two findings remediated: Chrome DNS over HTTPS bypass and WPAD proxy discovery noise."
 category: "HomeLab"
 pubDate: "2026-06-18"
 updatedDate: "2026-06-18"
 draft: false
 featured: false
-tags: ["Wireshark", "Packet Capture", "Networking", "Troubleshooting"]
+tags: ["Wireshark", "Packet Capture", "Networking", "DNS", "Troubleshooting"]
 source: "Obsidian HomeLab Sprint Project 02"
 publicReviewed: true
 ---
-This lab is intentionally written as a lesson, not as a finished project claim. The packet capture work was started, the traffic generation commands were proven, and the most important blocker showed up immediately: capture permissions matter.
 
-That is still useful. In real support work, the blocker is often the lesson.
+Most people assume their computer only talks to the internet when they are actively using it. A short Wireshark capture proves otherwise.
 
-## What I was trying to prove
+I ran a packet capture lab on my own machine across Wi-Fi and Tailscale interfaces. The goal was simple: stop relying on textbook examples and learn what real traffic looks like when DNS, TCP, TLS, and background telemetry are all happening at once.
 
-The goal was to inspect basic network behavior at the packet level:
+## What I used
 
-- DNS lookups
-- ICMP reachability checks
-- TCP handshakes
-- ARP on a local network
-- filtering traffic by host and protocol
+Wireshark is a free network protocol analyzer used by IT support teams, network engineers, and security analysts. It captures packets moving through a network interface and lets you inspect the headers, protocol behavior, ports, flags, and sometimes application-layer data.
 
-A completed version of this lab should include packet numbers, screenshots, and saved capture files. This first pass does not claim that yet.
+For this lab I captured traffic from two places:
 
-## What worked
+- The Wi-Fi interface for normal local network and internet traffic.
+- The Tailscale interface for private tailnet traffic between homelab machines.
 
-The traffic generation side worked.
+That distinction mattered immediately. Tailscale encrypts traffic on the Wi-Fi side. If I wanted to inspect tailnet DNS traffic, I had to capture from the Tailscale interface instead of the Wi-Fi interface.
 
-For DNS, the lab used a direct lookup against the lab resolver to generate observable DNS traffic. For reachability, it used ICMP echo requests to confirm a device could respond across the network path.
+## Filters that made the capture useful
 
-Useful display filters for the next capture pass:
+Raw packet capture is noisy. The useful skill is asking a specific question and filtering down to the evidence.
+
+I used filters like:
 
 ```text
 dns
-icmp
-arp
-tcp.flags.syn == 1
 tcp.flags.syn == 1 && tcp.flags.ack == 0
 udp.port == 53 || tcp.port == 53
 ```
 
-These filters matter because packet captures are noisy. A good filter turns a wall of packets into a specific question.
+Those filters let me isolate DNS behavior, new TCP connection attempts, and resolver traffic instead of staring at thousands of unrelated packets.
 
-## What blocked the capture
+## What the protocol hierarchy showed
 
-The first capture attempt hit a permissions problem. Packet capture requires elevated capture rights on the machine doing the sniffing. Without that permission, the tool can fail even when the network traffic itself is real.
+The DNS-filtered capture showed DNS behaving the way it should: mostly UDP, with a small amount of TCP fallback.
 
-That distinction matters:
+That matters because DNS uses UDP by default for speed. TCP appears when responses are larger or when the protocol needs reliability. Seeing that in a real capture made the protocol behavior concrete instead of theoretical.
 
-- traffic generation can work
-- connectivity can work
-- the capture tool can still fail because the user lacks capture permission
+## Finding 1: Chrome was bypassing Pi-hole
 
-Those are three different facts. Treating them as one problem leads to bad troubleshooting.
+While reviewing TCP SYN packets, I noticed traffic headed to Google DNS over port 443. That pointed to DNS over HTTPS.
 
-## Why this is still worth documenting
+Chrome's Secure DNS feature can send DNS queries directly to a provider over HTTPS instead of using the system resolver. In my case, that meant Chrome could bypass my Pi-hole DNS filtering and logging.
 
-A help desk technician needs to know more than the happy path. This lab documents the actual troubleshooting boundary:
+The fix was direct: disable Secure DNS in Chrome so the browser uses the system DNS path again.
 
-- the target service responded
-- DNS and ICMP traffic could be generated
-- capture required elevated permission
-- the next step is to run the capture from a properly authorized workstation or grant capture rights safely
+The lesson: a network-wide DNS filter is only network-wide if applications are not bypassing it with their own resolver settings.
 
-That is the honest state of the lab.
+## Finding 2: Windows WPAD noise
 
-## What the finished version needs
+The DNS capture also showed repeated WPAD proxy-discovery queries.
 
-Before this becomes a completed portfolio proof, it needs:
+WPAD stands for Web Proxy Auto-Discovery. Windows can use it to look for a proxy configuration file. I do not run a proxy for this environment, so the repeated queries were just noise and unnecessary exposure of local naming information.
 
-- a real DNS capture
-- a real TCP handshake capture
-- an ARP capture on a local segment
-- packet numbers or screenshots
-- one troubleshooting finding backed by captured evidence
+I disabled automatic proxy discovery at the system and user level. After that, the WPAD noise stopped.
 
-Until then, the value is the setup, the filters, and the permission lesson.
+The lesson: background operating-system features can create traffic you did not intentionally start. Packet capture makes that visible.
+
+## TLS did its job
+
+I also followed a TCP stream from HTTPS traffic. The result was unreadable ciphertext, which is exactly what should happen.
+
+Wireshark could show that a connection happened, when it happened, which server was contacted, and how much data moved. It could not read the web content inside the encrypted stream.
+
+That was a useful confirmation: TLS protects the payload, but metadata is still visible.
+
+## What I learned
+
+This project turned into more than a Wireshark walkthrough. It became a real support and security exercise:
+
+- Pick the correct capture interface.
+- Generate the traffic you want to observe.
+- Filter by protocol, port, and TCP flags.
+- Separate encrypted payload from visible metadata.
+- Identify browser DNS bypass behavior.
+- Remove noisy WPAD proxy-discovery traffic.
+- Document the fix, not just the finding.
+
+That is the kind of practical troubleshooting I want in my toolkit for help desk, IT support, and security-adjacent work.
 
 ## Final takeaway
 
-Packet capture is not just a button in Wireshark. It is a controlled troubleshooting process: generate the right traffic, capture from the right place, use the right filter, and prove what happened with evidence.
+Wireshark is not just a packet viewer. It is a way to prove what the network is actually doing.
+
+In this lab, it showed me two real problems I did not know I had. I fixed both and left with a clearer understanding of DNS, TCP handshakes, TLS visibility, and interface selection.

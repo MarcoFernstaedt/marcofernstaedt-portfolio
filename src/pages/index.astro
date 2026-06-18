@@ -28,6 +28,13 @@ const projects = [
     outcome: 'Triage rules routed common requests automatically, keeping first response inside target.',
   },
   {
+    tag: 'Wireshark and DNS',
+    title: 'Packet capture troubleshooting lab',
+    what: 'Captured real traffic across Wi-Fi and Tailscale interfaces, filtered DNS and TCP handshakes, and identified Chrome DNS over HTTPS bypassing Pi-hole plus Windows WPAD proxy-discovery noise.',
+    outcome: 'Remediated both findings and documented the packet evidence, interface-selection lesson, TLS visibility limits, and practical support workflow.',
+    writeup: '/blog/wireshark-packet-capture-lab-lessons',
+  },
+  {
     tag: 'Documentation',
     title: 'Help desk knowledge base',
     what: 'Wrote clear, step by step articles for the issues that fill a Tier 1 queue, from password resets and account lockouts to Outlook, printing, and VPN access.',
@@ -118,7 +125,7 @@ const projects = [
             <p class="outcome">{p.outcome}</p>
             <div class="links">
               <a href={GITHUB}>View on GitHub</a>
-              <a href="/blog">Read writeup</a>
+              <a href={p.writeup ?? '/blog'}>Read writeup</a>
             </div>
           </article>
         ))}
