@@ -12,6 +12,7 @@
     "export:obsidian-blog": "node scripts/export-obsidian-blog.mjs"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "astro": "^6.4.8"
   }
 }

@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
 const GITHUB = 'https://github.com/marcofernstaedt';
+const LINKEDIN = 'https://linkedin.com/in/marcofernstaedt';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -12,45 +13,72 @@ const projects = [
   {
     tag: 'Active Directory',
     title: 'Domain controller and Group Policy lab',
-    what: 'Stood up a Windows Server domain, managed users, OUs, and security groups, and handled password resets, lockouts, and unlocks both in the console and through the PowerShell Active Directory module.',
-    outcome: 'Automated bulk account tasks with PowerShell, cutting repetitive setup to a single command.',
+    what: 'Deployed a Windows Server domain controller, structured users, OUs, and security groups, and automated bulk account operations with PowerShell.',
+    outcome: 'Reduced repetitive provisioning tasks to single-command execution — the same pattern used in production IT environments.',
+    github: GITHUB,
+    writeup: '/blog',
   },
   {
     tag: 'Microsoft 365 and Entra ID',
     title: 'Cloud identity administration',
-    what: 'Configured a Microsoft 365 tenant and managed accounts, licenses, and groups, including password resets, multi factor authentication, and basic mailbox tasks for end users.',
-    outcome: 'Built a repeatable onboarding and offboarding checklist for new and departing users.',
+    what: 'Configured a Microsoft 365 tenant and managed the full identity lifecycle: provisioning, licensing, MFA, and mailbox administration.',
+    outcome: 'Documented a repeatable onboarding and offboarding runbook — the kind organizations standardize to eliminate gaps during staff transitions.',
+    github: GITHUB,
+    writeup: '/blog',
   },
   {
     tag: 'Ticketing and ITSM',
     title: 'Service desk ticket workflow',
-    what: 'Built a working ticket queue with categories, priorities, and service level targets, then logged, triaged, resolved, and documented tickets following a standard support process.',
-    outcome: 'Triage rules routed common requests automatically, keeping first response inside target.',
+    what: 'Built a service desk ticket queue with category triage, SLA targets, and documented resolution workflows modeled on ITIL-aligned practices.',
+    outcome: 'Automated routing rules kept first response inside SLA target for common request types.',
+    github: GITHUB,
+    writeup: '/blog',
   },
   {
     tag: 'Documentation',
     title: 'Help desk knowledge base',
-    what: 'Wrote clear, step by step articles for the issues that fill a Tier 1 queue, from password resets and account lockouts to Outlook, printing, and VPN access.',
-    outcome: 'Plain language guides any user can follow, reducing repeat tickets on the same issues.',
+    what: 'Wrote fourteen step-by-step technical articles covering the most common Tier 1 issues: account lockouts, Outlook failures, VPN, printing, and MFA setup.',
+    outcome: 'Plain-language documentation any user can act on, designed to eliminate repeat tickets at the source.',
+    github: GITHUB,
+    writeup: '/blog',
+  },
+  {
+    tag: 'Network Security',
+    title: 'Pi-hole + Unbound recursive DNS lab',
+    what: 'Deployed Pi-hole as a network-level DNS sinkhole with Unbound as a recursive resolver — eliminating reliance on upstream ISP DNS and enabling local ad and threat blocking.',
+    outcome: 'Hands-on network security configuration: DNS filtering, recursive resolution, and traffic visibility in a real home lab environment.',
+    writeup: '/blog/pihole-unbound-recursive-dns-homelab',
+  },
+  {
+    tag: 'Network Forensics',
+    title: 'Wireshark packet capture lab',
+    what: 'Captured and analyzed live network traffic to identify protocol behavior, filter suspicious patterns, and document what normal versus anomalous traffic looks like.',
+    outcome: 'Practical application of network forensics fundamentals — the skill set that feeds directly into SOC analyst and threat detection work.',
+    writeup: '/blog/wireshark-packet-capture-lab-lessons',
   },
 ];
 ---
-<BaseLayout title="Marco Fernstaedt — IT Support and Service Desk">
+<BaseLayout
+  title="Marco Fernstaedt — IT Support & Cybersecurity | Phoenix, Arizona"
+  description="IT support and security technician in Phoenix, Arizona. Active Directory, Microsoft 365, help desk, and cybersecurity fundamentals — six lab projects, fourteen technical writeups."
+  isHome={true}
+>
   <section class="hero" aria-labelledby="hero-name" style="border-top:none;">
     <div class="wrap">
-      <p class="mono">IT Support / Service Desk / Phoenix, Arizona</p>
+      <p class="mono">IT Support · Cybersecurity | Phoenix, Arizona</p>
       <h1 id="hero-name">I keep people working when their tech stops.</h1>
-      <p class="role">Help Desk and Service Desk Technician</p>
+      <p class="role">IT Support &amp; Security Technician</p>
       <p class="intro">
-        I resolve end user issues across Windows and Linux, manage accounts and access in Active Directory and
-        Microsoft 365, and write the documentation that stops the same ticket coming back. Years of high volume
-        customer support, plus a deep background in screen reader and assistive technology, so I support every kind
-        of user with patience and clarity.
+        I administer Windows and Linux environments, manage identity and access in Active Directory and
+        Microsoft 365, and deploy security-minded lab infrastructure. Six documented lab projects and
+        fourteen technical writeups show how I think through real problems — and produce solutions that
+        don't come back as repeat tickets.
       </p>
       <div class="cta-row">
         <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Email me</a>
         <a class="btn ghost" href="#projects">See my work</a>
         <a class="btn ghost" href={GITHUB}>GitHub</a>
+        <a class="btn ghost" href={LINKEDIN}>LinkedIn</a>
       </div>
     </div>
   </section>
@@ -90,12 +118,14 @@ const projects = [
           </ul>
         </div>
         <div class="skill-card">
-          <h3>People and accessibility</h3>
+          <h3>Security and defense</h3>
           <ul>
-            <li>High volume phone and CRM support</li>
-            <li>Clear communication with non technical users</li>
-            <li>NVDA, JAWS, and Orca screen readers</li>
-            <li>Accessibility troubleshooting</li>
+            <li>Threat detection and log analysis</li>
+            <li>Network monitoring (Wireshark, Pi-hole)</li>
+            <li>SIEM fundamentals (Splunk, Chronicle)</li>
+            <li>Phishing identification and triage</li>
+            <li>MFA enforcement and zero-trust principles</li>
+            <li>Vulnerability assessment concepts</li>
           </ul>
         </div>
       </div>
@@ -107,7 +137,7 @@ const projects = [
       <div class="sec-head">
         <p class="mono">Built and documented</p>
         <h2 id="projects-h">Projects</h2>
-        <p>Hands on labs that mirror real service desk work. Configs and scripts live on GitHub, full writeups are linked from each.</p>
+        <p>Hands-on lab infrastructure and security projects — each documented end to end with configs, scripts, and writeups.</p>
       </div>
       <div class="projects">
         {projects.map((p) => (
@@ -117,8 +147,8 @@ const projects = [
             <p class="what">{p.what}</p>
             <p class="outcome">{p.outcome}</p>
             <div class="links">
-              <a href={GITHUB}>View on GitHub</a>
-              <a href="/blog">Read writeup</a>
+              {p.github && <a href={p.github}>View on GitHub</a>}
+              {p.writeup && <a href={p.writeup}>Read writeup</a>}
             </div>
           </article>
         ))}
@@ -130,8 +160,8 @@ const projects = [
     <div class="wrap">
       <div class="sec-head">
         <p class="mono">Knowledge base</p>
-        <h2 id="writeups-h">Troubleshooting writeups</h2>
-        <p>Short, clear guides for the issues a service desk sees every day. This is where the documentation skill lives.</p>
+        <h2 id="writeups-h">Technical writeups</h2>
+        <p>Step-by-step guides for common IT and security issues — fourteen articles covering what a service desk and security team encounter every day.</p>
       </div>
       <ul class="writeups">
         {posts.map((post) => (
@@ -150,46 +180,46 @@ const projects = [
   <section id="experience" aria-labelledby="experience-h" class="reveal">
     <div class="wrap">
       <div class="sec-head">
-        <p class="mono">Where I have worked and practiced</p>
+        <p class="mono">Professional background</p>
         <h2 id="experience-h">Experience</h2>
       </div>
       <div class="xp">
         <div class="xp-item">
           <div class="top">
-            <h3>Customer Experience (CX) Associate, AnywhereWorks (Remote)</h3>
+            <h3>Customer Experience Associate, AnywhereWorks (Remote)</h3>
             <span class="when">Dec 2024 — Present</span>
           </div>
           <ul>
-            <li>Resolve customer issues in a high volume support environment, aiming for first contact resolution.</li>
-            <li>Document interactions in CRM software and follow structured escalation processes.</li>
-            <li>Keep a calm, clear manner with frustrated and non technical customers.</li>
+            <li>Resolved technical and account issues in a high-volume support queue, maintaining documentation in CRM per escalation protocol.</li>
+            <li>Applied systematic troubleshooting to replicate and resolve user-reported failures quickly across diverse issue types.</li>
           </ul>
         </div>
         <div class="xp-item">
           <div class="top">
-            <h3>IT Support, Self Directed Home Lab</h3>
+            <h3>IT Systems Administration — Home Lab</h3>
             <span class="when">2024 — Present</span>
           </div>
           <ul>
-            <li>Run an ongoing home lab to practice real help desk tasks across Windows and Linux, documenting every build and fix.</li>
-            <li>Administer Active Directory and a Microsoft 365 tenant, including password resets, lockouts, and access changes.</li>
-            <li>Operate a multi machine Linux environment with secure remote access, automated backups, and scripting.</li>
+            <li>Run an ongoing home lab environment across Windows and Linux, documenting every build, configuration, and fix.</li>
+            <li>Administer Active Directory and a Microsoft 365 tenant, including identity lifecycle management, password resets, and access changes.</li>
+            <li>Operate a multi-machine Linux environment with secure remote access, automated backups, and scripting.</li>
           </ul>
         </div>
       </div>
-      <p class="note">CompTIA Network+ in progress, target July 2026. Kofa High School.</p>
+      <p class="note">Pursuing CompTIA Network+ — expected July 2026</p>
     </div>
   </section>
 
   <section id="contact" aria-labelledby="contact-h" style="border-bottom:none;">
     <div class="wrap">
       <div class="contact-box">
-        <h2 id="contact-h">Let's talk about your service desk</h2>
-        <p>Open to help desk and service desk roles, remote or in the Phoenix area. The fastest way to reach me is email or phone.</p>
+        <h2 id="contact-h">Ready to contribute from day one</h2>
+        <p>Open to IT support, service desk, and cybersecurity roles — remote or in the Phoenix area. Email is fastest.</p>
         <div class="contact-links">
           <a href="mailto:fernstaedtmarco@gmail.com">fernstaedtmarco@gmail.com</a>
           <a href="tel:+19282569277">928 256 9277</a>
           <a href={GITHUB}>github.com/marcofernstaedt</a>
+          <a href={LINKEDIN}>linkedin.com/in/marcofernstaedt</a>
         </div>
       </div>
     </div>

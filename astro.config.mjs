@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
-// Custom domain at the root, so no base path is needed.
 export default defineConfig({
   site: 'https://marcofernstaedt.com',
+  integrations: [sitemap()],
 });

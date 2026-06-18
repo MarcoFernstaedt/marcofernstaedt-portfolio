@@ -6,8 +6,34 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title: string;
   description?: string;
+  isHome?: boolean;
 }
-const { title, description = 'IT support and service desk technician in Phoenix, Arizona.' } = Astro.props;
+const {
+  title,
+  description = 'IT support and security technician in Phoenix, Arizona. Specializing in help desk, Active Directory, Microsoft 365, and cybersecurity fundamentals.',
+  isHome = false,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Marco Fernstaedt',
+  jobTitle: 'IT Support & Security Technician',
+  url: 'https://marcofernstaedt.com',
+  email: 'fernstaedtmarco@gmail.com',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Phoenix',
+    addressRegion: 'AZ',
+    addressCountry: 'US',
+  },
+  sameAs: [
+    'https://github.com/marcofernstaedt',
+    'https://linkedin.com/in/marcofernstaedt',
+  ],
+};
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -16,6 +42,24 @@ const { title, description = 'IT support and service desk technician in Phoenix,
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="Marco Fernstaedt" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {isHome && (
+      <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+    )}
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
