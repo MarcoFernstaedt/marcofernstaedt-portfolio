@@ -39,5 +39,29 @@ const { title, description = 'IT support and service desk technician in Phoenix,
     <Header />
     <main id="main"><slot /></main>
     <Footer />
+    <script is:inline>
+      (function () {
+        var items = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+        if (!items.length) return;
+
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+          items.forEach(function (item) { item.classList.add('in'); });
+          return;
+        }
+
+        items.forEach(function (item) { item.classList.add('js-reveal'); });
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+
+        items.forEach(function (item) { observer.observe(item); });
+      })();
+    </script>
   </body>
 </html>
