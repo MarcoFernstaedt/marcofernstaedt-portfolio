@@ -41,7 +41,7 @@ assert(/\.reveal\.js-reveal/.test(css), 'Motion reveal styling must be opt-in vi
 assert(/IntersectionObserver/.test(baseLayout), 'Smooth reveal fade-in must use IntersectionObserver');
 assert(/classList\.add\('js-reveal'\)/.test(baseLayout), 'Reveal script must add js-reveal only after JavaScript loads');
 assert(/classList\.add\('in'\)/.test(baseLayout), 'Reveal script must add in class when sections enter viewport');
-assert(/\/_vercel\/insights\/script\.js/.test(baseLayout), 'Portfolio must load Vercel Web Analytics so visits are visible in Vercel');
+assert(/from '@vercel\/analytics'/.test(baseLayout) && /inject\(\)/.test(baseLayout), 'Portfolio must load Vercel Web Analytics so visits are visible in Vercel');
 
 const posts = readMarkdownPosts(blogDir);
 const published = posts.filter((post) => frontmatterValue(post.frontmatter, 'draft') !== 'true');

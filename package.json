@@ -12,6 +12,7 @@
     "export:obsidian-blog": "node scripts/export-obsidian-blog.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "astro": "^6.4.8"
   }
 }
