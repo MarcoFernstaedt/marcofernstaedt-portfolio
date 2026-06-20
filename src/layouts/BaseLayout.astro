@@ -58,14 +58,53 @@ const { title, description = 'IT support and service desk technician in Phoenix,
             visitorId = 'v_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
             localStorage.setItem(visitorKey, visitorId);
           }
+          var sessionKey = 'marco_site_session_id';
+          var visitCountKey = 'marco_site_visit_count';
+          var sessionId = sessionStorage.getItem(sessionKey);
+          if (!sessionId) {
+            sessionId = 's_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
+            sessionStorage.setItem(sessionKey, sessionId);
+          }
+          var visitCount = Number(localStorage.getItem(visitCountKey) || '0') + 1;
+          localStorage.setItem(visitCountKey, String(visitCount));
+          var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+          var navigationEntry = performance && performance.getEntriesByType
+            ? performance.getEntriesByType('navigation')[0]
+            : null;
+          var pageLoadMs = navigationEntry && navigationEntry.loadEventEnd
+            ? Math.round(navigationEntry.loadEventEnd).toString()
+            : '';
           var query = new URLSearchParams({
             visitorId: visitorId,
+            session_id: sessionId,
+            visit_count: String(visitCount),
             owner: localStorage.getItem(ownerKey) === '1' ? '1' : '0',
+            url: window.location.href,
             path: window.location.pathname,
+            search: window.location.search,
+            hash: window.location.hash,
             referrer: document.referrer || '',
             title: document.title,
             language: navigator.language || '',
             screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : '',
+            viewport: String(window.innerWidth) + 'x' + String(window.innerHeight),
+            color_depth: window.screen ? String(window.screen.colorDepth || '') : '',
+            pixel_ratio: String(window.devicePixelRatio || ''),
+            touch_points: String(navigator.maxTouchPoints || 0),
+            platform: navigator.platform || '',
+            vendor: navigator.vendor || '',
+            cookies_enabled: String(navigator.cookieEnabled),
+            do_not_track: navigator.doNotTrack || window.doNotTrack || '',
+            online: String(navigator.onLine),
+            connection_type: connection.effectiveType || connection.type || '',
+            connection_downlink: connection.downlink ? String(connection.downlink) : '',
+            connection_rtt: connection.rtt ? String(connection.rtt) : '',
+            save_data: connection.saveData ? '1' : '0',
+            device_memory: navigator.deviceMemory ? String(navigator.deviceMemory) : '',
+            hardware_concurrency: navigator.hardwareConcurrency ? String(navigator.hardwareConcurrency) : '',
+            nav_type: navigationEntry ? String(navigationEntry.type || '') : '',
+            visibility_state: document.visibilityState || '',
+            page_load_ms: pageLoadMs,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
             cache: Date.now().toString(36)
           });

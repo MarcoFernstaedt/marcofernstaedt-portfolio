@@ -45,6 +45,24 @@ assert(/from '@vercel\/analytics'/.test(baseLayout) && /inject\(\)/.test(baseLay
 assert(/srv1522777\.tail72f980\.ts\.net:8448\/pixel/.test(baseLayout), 'Portfolio must send privacy-safe custom visitor beacons to Imperator collector');
 assert(/new Image\(1, 1\)/.test(baseLayout), 'Custom visitor beacon must use an image pixel to avoid mobile CORS sendBeacon failures');
 assert(/marco_site_owner/.test(baseLayout) && /params\.get\('owner'\) === 'marco'/.test(baseLayout), 'Owner marking must be available through ?owner=marco');
+for (const field of [
+  'session_id',
+  'visit_count',
+  'url',
+  'viewport',
+  'pixel_ratio',
+  'touch_points',
+  'platform',
+  'vendor',
+  'cookies_enabled',
+  'do_not_track',
+  'connection_type',
+  'device_memory',
+  'hardware_concurrency',
+  'page_load_ms',
+]) {
+  assert(baseLayout.includes(field), `Custom visitor beacon must collect ${field}`);
+}
 
 const posts = readMarkdownPosts(blogDir);
 const published = posts.filter((post) => frontmatterValue(post.frontmatter, 'draft') !== 'true');
