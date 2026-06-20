@@ -46,7 +46,7 @@ const { title, description = 'IT support and service desk technician in Phoenix,
     <script is:inline>
       (function () {
         try {
-          var endpoint = 'https://srv1522777.tail72f980.ts.net:8448/visit';
+          var endpoint = 'https://srv1522777.tail72f980.ts.net:8448/pixel';
           var visitorKey = 'marco_site_visitor_id';
           var ownerKey = 'marco_site_owner';
           var params = new URLSearchParams(window.location.search);
@@ -58,21 +58,20 @@ const { title, description = 'IT support and service desk technician in Phoenix,
             visitorId = 'v_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
             localStorage.setItem(visitorKey, visitorId);
           }
-          var payload = JSON.stringify({
+          var query = new URLSearchParams({
             visitorId: visitorId,
-            owner: localStorage.getItem(ownerKey) === '1',
+            owner: localStorage.getItem(ownerKey) === '1' ? '1' : '0',
             path: window.location.pathname,
-            referrer: document.referrer || null,
+            referrer: document.referrer || '',
             title: document.title,
-            language: navigator.language || null,
-            screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : null,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null
+            language: navigator.language || '',
+            screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : '',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+            cache: Date.now().toString(36)
           });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
-          } else {
-            fetch(endpoint, { method: 'POST', mode: 'cors', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: payload }).catch(function () {});
-          }
+          var pixel = new Image(1, 1);
+          pixel.referrerPolicy = 'origin-when-cross-origin';
+          pixel.src = endpoint + '?' + query.toString();
         } catch (e) {}
       })();
     </script>

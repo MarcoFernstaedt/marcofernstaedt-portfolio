@@ -42,7 +42,8 @@ assert(/IntersectionObserver/.test(baseLayout), 'Smooth reveal fade-in must use 
 assert(/classList\.add\('js-reveal'\)/.test(baseLayout), 'Reveal script must add js-reveal only after JavaScript loads');
 assert(/classList\.add\('in'\)/.test(baseLayout), 'Reveal script must add in class when sections enter viewport');
 assert(/from '@vercel\/analytics'/.test(baseLayout) && /inject\(\)/.test(baseLayout), 'Portfolio must load Vercel Web Analytics so visits are visible in Vercel');
-assert(/srv1522777\.tail72f980\.ts\.net:8448\/visit/.test(baseLayout), 'Portfolio must send privacy-safe custom visitor beacons to Imperator collector');
+assert(/srv1522777\.tail72f980\.ts\.net:8448\/pixel/.test(baseLayout), 'Portfolio must send privacy-safe custom visitor beacons to Imperator collector');
+assert(/new Image\(1, 1\)/.test(baseLayout), 'Custom visitor beacon must use an image pixel to avoid mobile CORS sendBeacon failures');
 assert(/marco_site_owner/.test(baseLayout) && /params\.get\('owner'\) === 'marco'/.test(baseLayout), 'Owner marking must be available through ?owner=marco');
 
 const posts = readMarkdownPosts(blogDir);
