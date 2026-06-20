@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const css = fs.readFileSync(path.join(root, 'src/styles/global.css'), 'utf8');
 const baseLayout = fs.readFileSync(path.join(root, 'src/layouts/BaseLayout.astro'), 'utf8');
+const visitorCollector = fs.readFileSync(path.join(root, 'scripts/private-visitor-log-collector.py'), 'utf8');
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const blogDir = path.join(root, 'src/content/blog');
 
@@ -63,6 +64,25 @@ for (const field of [
 ]) {
   assert(baseLayout.includes(field), `Custom visitor beacon must collect ${field}`);
 }
+
+for (const envName of [
+  'VISITOR_LOG_NTFY_URL',
+  'VISITOR_LOG_NTFY_TOPIC',
+  'VISITOR_LOG_NTFY_USER',
+  'VISITOR_LOG_NTFY_PASSWORD',
+  'VISITOR_LOG_NOTIFY_OWNER',
+  'VISITOR_LOG_NOTIFY_NON_OWNER',
+  'VISITOR_LOG_NOTIFY_MIN_SECONDS_PER_VISITOR',
+]) {
+  assert(visitorCollector.includes(envName), `Visitor collector must support ${envName}`);
+}
+assert(/CREATE TABLE IF NOT EXISTS notification_state/.test(visitorCollector), 'Visitor collector must persist ntfy rate-limit state');
+assert(/def maybe_notify\(/.test(visitorCollector), 'Visitor collector must centralize notification decisions in maybe_notify');
+assert(/def send_ntfy_notification\(/.test(visitorCollector), 'Visitor collector must send notifications through send_ntfy_notification');
+assert(/timeout=3/.test(visitorCollector), 'Visitor collector ntfy requests must have a hard 3 second timeout');
+assert(/except Exception/.test(visitorCollector) && /send_ntfy_notification/.test(visitorCollector), 'Visitor collector must catch ntfy failures so logging still succeeds');
+assert(/owner_mark/.test(visitorCollector) && /VISITOR_LOG_NOTIFY_OWNER/.test(visitorCollector), 'Visitor collector must support owner notification suppression');
+assert(!/raw_ip|client_ip\([^\n]+\).*message|ip:\s*\{ip\}/i.test(visitorCollector), 'Visitor collector notification body must not include raw IPs');
 
 const posts = readMarkdownPosts(blogDir);
 const published = posts.filter((post) => frontmatterValue(post.frontmatter, 'draft') !== 'true');

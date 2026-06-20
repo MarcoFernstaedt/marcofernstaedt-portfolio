@@ -13,10 +13,13 @@ import json
 import os
 import sqlite3
 import time
+import urllib.request
+import urllib.error
+import base64
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 DATA_DIR = Path(os.environ.get("VISITOR_LOG_DIR", "/home/marco/.hermes/visitor-analytics"))
 DB_PATH = Path(os.environ.get("VISITOR_LOG_DB", str(DATA_DIR / "visitors.sqlite3")))
@@ -111,6 +114,14 @@ def db() -> sqlite3.Connection:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_visits_ts ON visits(ts_utc)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_visits_owner ON visits(owner_mark)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_visits_session ON visits(session_id)")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS notification_state (
+            visitor_id TEXT PRIMARY KEY,
+            last_notified_ms INTEGER NOT NULL
+        )
+        """
+    )
     return conn
 
 
@@ -156,6 +167,162 @@ def client_ip(headers, address) -> str:
     return address[0]
 
 
+def config_bool(name: str, default: bool) -> bool:
+    value = CONFIG.get(name)
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def config_int(name: str, default: int) -> int:
+    try:
+        return int(CONFIG.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def ntfy_config() -> dict[str, str]:
+    return {
+        "url": CONFIG.get("VISITOR_LOG_NTFY_URL", "").rstrip("/"),
+        "topic": CONFIG.get("VISITOR_LOG_NTFY_TOPIC", ""),
+        "user": CONFIG.get("VISITOR_LOG_NTFY_USER", ""),
+        "password": CONFIG.get("VISITOR_LOG_NTFY_PASSWORD", ""),
+    }
+
+
+def notification_key(row: dict[str, str | int | None]) -> str:
+    visitor_id = truncate(row.get("visitor_id"), 120)
+    if visitor_id:
+        return f"visitor:{visitor_id}"
+    ip_hash = truncate(row.get("ip_hash"), 120) or "anonymous"
+    path = truncate(row.get("path"), 120) or "unknown"
+    return f"fallback:{ip_hash}:{path}"
+
+
+def should_notify(conn: sqlite3.Connection, row: dict[str, str | int | None]) -> bool:
+    owner = int(row.get("owner_mark") or 0) == 1
+    if owner and not config_bool("VISITOR_LOG_NOTIFY_OWNER", False):
+        return False
+    if not owner and not config_bool("VISITOR_LOG_NOTIFY_NON_OWNER", True):
+        return False
+    cfg = ntfy_config()
+    if not cfg["url"] or not cfg["topic"]:
+        return False
+
+    now_ms = int(time.time() * 1000)
+    min_ms = max(0, config_int("VISITOR_LOG_NOTIFY_MIN_SECONDS_PER_VISITOR", 300)) * 1000
+    key = notification_key(row)
+    existing = conn.execute(
+        "SELECT last_notified_ms FROM notification_state WHERE visitor_id=?",
+        (key,),
+    ).fetchone()
+    if existing and now_ms - int(existing[0]) < min_ms:
+        return False
+    conn.execute(
+        """
+        INSERT INTO notification_state(visitor_id, last_notified_ms)
+        VALUES (?, ?)
+        ON CONFLICT(visitor_id) DO UPDATE SET last_notified_ms=excluded.last_notified_ms
+        """,
+        (key, now_ms),
+    )
+    return True
+
+
+def short_user_agent(user_agent: str | None) -> str:
+    text = truncate(user_agent, 160)
+    if not text:
+        return "unknown"
+    if "iPhone" in text:
+        device = "iPhone"
+    elif "Android" in text:
+        device = "Android"
+    elif "Windows" in text:
+        device = "Windows"
+    elif "Mac OS X" in text or "Macintosh" in text:
+        device = "Mac"
+    elif "Linux" in text:
+        device = "Linux"
+    else:
+        device = "unknown device"
+
+    if "Edg/" in text:
+        browser = "Edge"
+    elif "Chrome/" in text and "Chromium" not in text:
+        browser = "Chrome"
+    elif "Safari/" in text and "Chrome/" not in text:
+        browser = "Safari"
+    elif "Firefox/" in text:
+        browser = "Firefox"
+    else:
+        browser = "browser unknown"
+    return f"{browser} on {device}"
+
+
+def visitor_summary(row: dict[str, str | int | None]) -> str:
+    owner = "yes" if int(row.get("owner_mark") or 0) == 1 else "no"
+    visitor = truncate(row.get("visitor_id"), 16) or "anonymous"
+    region_parts = [truncate(row.get(key), 120) for key in ["city", "region", "country"]]
+    region = ", ".join(part for part in region_parts if part) or "unknown"
+    lines = [
+        f"Owner: {owner}",
+        f"Path: {truncate(row.get('path'), 500) or '/'}",
+        f"Referrer: {truncate(row.get('referrer'), 500) or 'direct/unknown'}",
+        f"Browser: {short_user_agent(truncate(row.get('user_agent'), 500))}",
+        f"Region: {region}",
+        f"Language: {truncate(row.get('language'), 80) or 'unknown'}",
+        f"TZ: {truncate(row.get('timezone'), 120) or 'unknown'}",
+        f"Screen: {truncate(row.get('screen'), 80) or truncate(row.get('viewport'), 80) or 'unknown'}",
+        f"Visitor: {visitor}",
+        f"Session: {truncate(row.get('session_id'), 16) or 'unknown'}",
+        f"Visit count: {truncate(row.get('visit_count'), 40) or 'unknown'}",
+        f"Time: {truncate(row.get('ts_utc'), 80) or now_utc()}",
+    ]
+    return "\n".join(lines)
+
+
+def send_ntfy_notification(row: dict[str, str | int | None]) -> bool:
+    try:
+        cfg = ntfy_config()
+        if not cfg["url"] or not cfg["topic"]:
+            return False
+        path = truncate(row.get("path"), 120) or "/"
+        url = f"{cfg['url']}/{quote(cfg['topic'], safe='')}"
+        data = visitor_summary(row).encode("utf-8")
+        req = urllib.request.Request(url, data=data, method="POST")
+        req.add_header("Title", f"Portfolio visit: {path}")
+        req.add_header("Priority", "3")
+        req.add_header("Tags", "chart_with_upwards_trend,computer")
+        if cfg["user"] and cfg["password"]:
+            token = base64.b64encode(f"{cfg['user']}:{cfg['password']}".encode("utf-8")).decode("ascii")
+            req.add_header("Authorization", f"Basic {token}")
+        with urllib.request.urlopen(req, timeout=3) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False
+
+
+def maybe_notify(conn: sqlite3.Connection, row: dict[str, str | int | None]) -> None:
+    if should_notify(conn, row):
+        send_ntfy_notification(row)
+
+
+VISIT_COLUMNS = [
+    "ts_utc", "received_ms", "visitor_id", "owner_mark", "ip_hash", "country", "region", "city",
+    "path", "referrer", "title", "user_agent", "language", "screen", "timezone", "source_origin",
+    *EXTRA_COLUMNS.keys(),
+]
+
+
+def insert_visit(conn: sqlite3.Connection, row: dict[str, str | int | None]) -> None:
+    columns_sql = ", ".join(VISIT_COLUMNS)
+    placeholders = ", ".join("?" for _ in VISIT_COLUMNS)
+    conn.execute(
+        f"INSERT INTO visits ({columns_sql}) VALUES ({placeholders})",
+        tuple(row.get(column) for column in VISIT_COLUMNS),
+    )
+    maybe_notify(conn, row)
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "ImperatorVisitorLog/1.0"
 
@@ -193,31 +360,27 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path in {"/pixel", "/visit.gif"}:
             qs = parse_qs(parsed.query)
             ip = client_ip(self.headers, self.client_address)
+            row = {
+                "ts_utc": now_utc(),
+                "received_ms": int(time.time() * 1000),
+                "visitor_id": first_query(qs, "visitorId", 120),
+                "owner_mark": 1 if (qs.get("owner") or [""])[0] == "1" else 0,
+                "ip_hash": hash_ip(ip),
+                "country": truncate(self.headers.get("X-Vercel-IP-Country"), 80),
+                "region": truncate(self.headers.get("X-Vercel-IP-Country-Region"), 80),
+                "city": truncate(self.headers.get("X-Vercel-IP-City"), 120),
+                "path": first_query(qs, "path", 500),
+                "referrer": first_query(qs, "referrer", 1000),
+                "title": first_query(qs, "title", 300),
+                "user_agent": truncate(self.headers.get("User-Agent"), 500),
+                "language": first_query(qs, "language", 80),
+                "screen": first_query(qs, "screen", 80),
+                "timezone": first_query(qs, "timezone", 120),
+                "source_origin": truncate(self.headers.get("Referer") or self.headers.get("Origin"), 200),
+                **dict(zip(EXTRA_COLUMNS.keys(), extra_from_query(qs))),
+            }
             with db() as conn:
-                conn.execute(
-                    """
-                    INSERT INTO visits (
-                        ts_utc, received_ms, visitor_id, owner_mark, ip_hash, country, region, city,
-                        path, referrer, title, user_agent, language, screen, timezone, source_origin,
-                        url, search, hash, viewport, color_depth, pixel_ratio, touch_points, platform,
-                        vendor, cookies_enabled, do_not_track, online, connection_type, connection_downlink,
-                        connection_rtt, save_data, device_memory, hardware_concurrency, nav_type,
-                        visibility_state, page_load_ms, session_id, visit_count
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        now_utc(), int(time.time() * 1000), first_query(qs, "visitorId", 120),
-                        1 if (qs.get("owner") or [""])[0] == "1" else 0, hash_ip(ip),
-                        truncate(self.headers.get("X-Vercel-IP-Country"), 80),
-                        truncate(self.headers.get("X-Vercel-IP-Country-Region"), 80),
-                        truncate(self.headers.get("X-Vercel-IP-City"), 120), first_query(qs, "path", 500),
-                        first_query(qs, "referrer", 1000), first_query(qs, "title", 300),
-                        truncate(self.headers.get("User-Agent"), 500), first_query(qs, "language", 80),
-                        first_query(qs, "screen", 80), first_query(qs, "timezone", 120),
-                        truncate(self.headers.get("Referer") or self.headers.get("Origin"), 200),
-                        *extra_from_query(qs),
-                    ),
-                )
+                insert_visit(conn, row)
             # 1x1 transparent GIF
             raw = b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
             self.send_response(200)
@@ -274,30 +437,27 @@ class Handler(BaseHTTPRequestHandler):
 
         ip = client_ip(self.headers, self.client_address)
         owner_mark = 1 if payload.get("owner") is True else 0
+        row = {
+            "ts_utc": now_utc(),
+            "received_ms": int(time.time() * 1000),
+            "visitor_id": payload_value(payload, "visitorId", 120),
+            "owner_mark": owner_mark,
+            "ip_hash": hash_ip(ip),
+            "country": truncate(self.headers.get("X-Vercel-IP-Country"), 80),
+            "region": truncate(self.headers.get("X-Vercel-IP-Country-Region"), 80),
+            "city": truncate(self.headers.get("X-Vercel-IP-City"), 120),
+            "path": payload_value(payload, "path", 500),
+            "referrer": payload_value(payload, "referrer", 1000),
+            "title": payload_value(payload, "title", 300),
+            "user_agent": truncate(self.headers.get("User-Agent"), 500),
+            "language": payload_value(payload, "language", 80),
+            "screen": payload_value(payload, "screen", 80),
+            "timezone": payload_value(payload, "timezone", 120),
+            "source_origin": truncate(self.headers.get("Origin"), 200),
+            **dict(zip(EXTRA_COLUMNS.keys(), extra_from_payload(payload))),
+        }
         with db() as conn:
-            conn.execute(
-                """
-                INSERT INTO visits (
-                    ts_utc, received_ms, visitor_id, owner_mark, ip_hash, country, region, city,
-                    path, referrer, title, user_agent, language, screen, timezone, source_origin,
-                    url, search, hash, viewport, color_depth, pixel_ratio, touch_points, platform,
-                    vendor, cookies_enabled, do_not_track, online, connection_type, connection_downlink,
-                    connection_rtt, save_data, device_memory, hardware_concurrency, nav_type,
-                    visibility_state, page_load_ms, session_id, visit_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    now_utc(), int(time.time() * 1000), payload_value(payload, "visitorId", 120), owner_mark,
-                    hash_ip(ip), truncate(self.headers.get("X-Vercel-IP-Country"), 80),
-                    truncate(self.headers.get("X-Vercel-IP-Country-Region"), 80),
-                    truncate(self.headers.get("X-Vercel-IP-City"), 120), payload_value(payload, "path", 500),
-                    payload_value(payload, "referrer", 1000), payload_value(payload, "title", 300),
-                    truncate(self.headers.get("User-Agent"), 500), payload_value(payload, "language", 80),
-                    payload_value(payload, "screen", 80), payload_value(payload, "timezone", 120),
-                    truncate(self.headers.get("Origin"), 200),
-                    *extra_from_payload(payload),
-                ),
-            )
+            insert_visit(conn, row)
         self.send_json(200, {"ok": True})
 
 
