@@ -45,6 +45,39 @@ const { title, description = 'IT support and service desk technician in Phoenix,
     <Footer />
     <script is:inline>
       (function () {
+        try {
+          var endpoint = 'https://srv1522777.tail72f980.ts.net:8448/visit';
+          var visitorKey = 'marco_site_visitor_id';
+          var ownerKey = 'marco_site_owner';
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('owner') === 'marco') {
+            localStorage.setItem(ownerKey, '1');
+          }
+          var visitorId = localStorage.getItem(visitorKey);
+          if (!visitorId) {
+            visitorId = 'v_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
+            localStorage.setItem(visitorKey, visitorId);
+          }
+          var payload = JSON.stringify({
+            visitorId: visitorId,
+            owner: localStorage.getItem(ownerKey) === '1',
+            path: window.location.pathname,
+            referrer: document.referrer || null,
+            title: document.title,
+            language: navigator.language || null,
+            screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : null,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(endpoint, new Blob([payload], { type: 'application/json' }));
+          } else {
+            fetch(endpoint, { method: 'POST', mode: 'cors', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: payload }).catch(function () {});
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script is:inline>
+      (function () {
         var items = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
         if (!items.length) return;
 
