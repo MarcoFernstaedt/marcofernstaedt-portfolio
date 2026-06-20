@@ -142,12 +142,74 @@ section { padding: 70px 0; border-bottom: 1px solid var(--line); }
 .xp-item li { padding: 3px 0; }
 .note { margin-top: 22px; color: var(--ink-soft); font-size: 0.95rem; }
 
+/* ---- Icon button ---- */
+.btn.icon {
+  padding: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border-radius: 10px;
+}
+
+/* ---- Sprint ---- */
+.sprint-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; padding: 32px 36px; }
+.sprint-header { display: flex; align-items: flex-start; gap: 28px; margin-bottom: 20px; }
+.sprint-counter {
+  text-align: center; flex-shrink: 0;
+  background: var(--card-tint); border: 1px solid var(--accent);
+  border-radius: 14px; padding: 16px 22px;
+}
+.sprint-day-num {
+  font-family: "Fraunces", serif;
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+  font-weight: 600; line-height: 1; color: var(--accent);
+}
+.sprint-day-label {
+  font-family: "IBM Plex Mono", monospace; font-size: 0.68rem;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft); margin-top: 4px;
+}
+.sprint-info { flex: 1; padding-top: 4px; }
+.sprint-title-text { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+.sprint-desc { color: var(--ink-soft); font-size: 0.96rem; line-height: 1.6; }
+.progress-track {
+  width: 100%; height: 6px; background: var(--line);
+  border-radius: 6px; margin: 22px 0 26px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+  border-radius: 6px;
+}
+.sprint-posts { border-top: 1px solid var(--line); padding-top: 4px; }
+.sprint-post {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: var(--ink); font-size: 0.95rem; font-weight: 500;
+}
+.sprint-post:last-child { border-bottom: none; }
+.sprint-post:hover { color: var(--accent); }
+.sprint-post .arrow { color: var(--accent); flex-shrink: 0; }
+.sprint-more { padding-top: 18px; border-top: 1px solid var(--line); }
+.sprint-more a { color: var(--accent); text-decoration: none; }
+.sprint-more a:hover { text-decoration: underline; }
+
 /* ---- Contact ---- */
 .contact-box { background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; padding: 48px 40px; text-align: center; }
 .contact-box h2 { font-family: "Fraunces", serif; font-size: clamp(1.6rem, 4vw, 2.3rem); margin-bottom: 14px; }
 .contact-box p { color: var(--ink-soft); max-width: 50ch; margin: 0 auto 26px; }
-.contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 28px; }
-.contact-links a { font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+.contact-actions { margin-bottom: 0; }
+.social-links { display: flex; justify-content: center; gap: 16px; margin-top: 24px; }
+.social-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 12px;
+  border: 1.5px solid var(--line); color: var(--ink-soft); text-decoration: none;
+}
+.social-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- Writeups footer ---- */
+.writeups-footer { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.writeups-footer .btn { display: inline-flex; align-items: center; }
 
 footer.site { padding: 34px 0; text-align: center; color: var(--ink-soft); font-size: 0.85rem; }
 
@@ -168,6 +230,9 @@ footer.site { padding: 34px 0; text-align: center; color: var(--ink-soft); font-
 
 @media (max-width: 760px) {
   .skills-grid, .projects { grid-template-columns: 1fr; }
+  .sprint-card { padding: 22px 20px; }
+  .sprint-header { flex-direction: column; gap: 18px; }
+  .sprint-counter { align-self: flex-start; }
   .nav-links { display: none; }
   .nav-links.open {
     display: flex; position: absolute; top: 66px; left: 0; right: 0;

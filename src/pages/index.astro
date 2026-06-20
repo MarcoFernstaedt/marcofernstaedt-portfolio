@@ -3,68 +3,118 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
 const GITHUB = 'https://github.com/marcofernstaedt';
+const LINKEDIN = 'https://linkedin.com/in/marcofernstaedt';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 5);
+const allPosts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const recentPosts = allPosts.slice(0, 5);
+const homelabPosts = allPosts.filter(p => p.data.category === 'HomeLab').slice(0, 4);
+
+const HOMELAB_DAY = 5;
+const HOMELAB_TOTAL = 30;
+const HOMELAB_PCT = Math.round((HOMELAB_DAY / HOMELAB_TOTAL) * 100);
 
 const projects = [
   {
     tag: 'Active Directory',
     title: 'Domain controller and Group Policy lab',
-    what: 'Stood up a Windows Server domain, managed users, OUs, and security groups, and handled password resets, lockouts, and unlocks both in the console and through the PowerShell Active Directory module.',
+    what: 'Stood up a Windows Server domain, managed users, OUs, and security groups, and automated account operations through the PowerShell Active Directory module.',
     outcome: 'Automated bulk account tasks with PowerShell, cutting repetitive setup to a single command.',
   },
   {
     tag: 'Microsoft 365 and Entra ID',
     title: 'Cloud identity administration',
-    what: 'Configured a Microsoft 365 tenant and managed accounts, licenses, and groups, including password resets, multi factor authentication, and basic mailbox tasks for end users.',
-    outcome: 'Built a repeatable onboarding and offboarding checklist for new and departing users.',
-  },
-  {
-    tag: 'Ticketing and ITSM',
-    title: 'Service desk ticket workflow',
-    what: 'Built a working ticket queue with categories, priorities, and service level targets, then logged, triaged, resolved, and documented tickets following a standard support process.',
-    outcome: 'Triage rules routed common requests automatically, keeping first response inside target.',
+    what: 'Configured a Microsoft 365 tenant, managed accounts, licenses, and groups, enforced multi-factor authentication, and built onboarding and offboarding runbooks.',
+    outcome: 'Built a repeatable provisioning checklist covering AD, Entra ID, and mailbox setup in one pass.',
   },
   {
     tag: 'Wireshark and DNS',
-    title: 'Packet capture troubleshooting lab',
-    what: 'Captured real traffic across Wi-Fi and Tailscale interfaces, filtered DNS and TCP handshakes, and identified Chrome DNS over HTTPS bypassing Pi-hole plus Windows WPAD proxy-discovery noise.',
-    outcome: 'Remediated both findings and documented the packet evidence, interface-selection lesson, TLS visibility limits, and practical support workflow.',
+    title: 'Packet capture and network analysis',
+    what: 'Captured real traffic across Wi-Fi and Tailscale interfaces, filtered DNS and TCP handshakes, and identified Chrome DoH bypassing Pi-hole plus Windows WPAD proxy-discovery noise.',
+    outcome: 'Remediated both findings and documented packet evidence, interface-selection lesson, TLS visibility limits, and practical analysis workflow.',
     writeup: '/blog/wireshark-packet-capture-lab-lessons',
   },
   {
+    tag: 'Pi-hole and Unbound',
+    title: 'Recursive DNS filtering lab',
+    what: 'Deployed Pi-hole with Unbound for fully recursive DNS resolution, eliminating third-party resolver dependencies and enabling network-wide filtering with per-client query logging.',
+    outcome: 'Analyzed my own DNS traffic to surface noisy clients, unusual query patterns, and logging anomalies.',
+    writeup: '/blog/pihole-unbound-recursive-dns-homelab',
+  },
+  {
     tag: 'Monitoring and Docker',
-    title: 'Uptime Kuma monitoring dashboard',
-    what: 'Deployed a self-hosted Uptime Kuma status dashboard, configured HTTP and ping checks, and wired push alerts through a scoped ntfy account.',
-    outcome: 'Diagnosed a silent alert failure from container network isolation and fixed it with internal Docker service routing instead of exposing the dashboard more broadly.',
+    title: 'Self-hosted observability stack',
+    what: 'Deployed Uptime Kuma in Docker, configured HTTP and ping checks across services, and wired push alerts through a scoped ntfy account for real-time notifications.',
+    outcome: 'Diagnosed a silent alert failure from container network isolation and fixed it with internal Docker service routing.',
     writeup: '/blog/uptime-kuma-docker-networking-lesson',
   },
   {
-    tag: 'Documentation',
-    title: 'Help desk knowledge base',
-    what: 'Wrote clear, step by step articles for the issues that fill a Tier 1 queue, from password resets and account lockouts to Outlook, printing, and VPN access.',
-    outcome: 'Plain language guides any user can follow, reducing repeat tickets on the same issues.',
+    tag: 'Ticketing and ITSM',
+    title: 'Service desk workflow design',
+    what: 'Built a working ticket queue with categories, priorities, and SLA targets, then designed triage rules and documented resolution playbooks for the most common request types.',
+    outcome: 'Triage rules routed common requests automatically, keeping first response inside target.',
   },
 ];
 ---
-<BaseLayout title="Marco Fernstaedt — IT Support and Service Desk">
+<BaseLayout title="Marco Fernstaedt — IT Professional">
   <section class="hero" aria-labelledby="hero-name" style="border-top:none;">
     <div class="wrap">
-      <p class="mono">IT Support / Service Desk / Phoenix, Arizona</p>
-      <h1 id="hero-name">I keep people working when their tech stops.</h1>
-      <p class="role">Help Desk and Service Desk Technician</p>
+      <p class="mono">IT Professional / Phoenix, Arizona</p>
+      <h1 id="hero-name">Infrastructure. Security. Automation.</h1>
+      <p class="role">Building toward Cybersecurity and DevOps</p>
       <p class="intro">
-        I resolve end user issues across Windows and Linux, manage accounts and access in Active Directory and
-        Microsoft 365, and write the documentation that stops the same ticket coming back. Years of high volume
-        customer support, plus a deep background in screen reader and assistive technology, so I support every kind
-        of user with patience and clarity.
+        I run a hands-on home lab focused on network security, identity management, and infrastructure monitoring.
+        Comfortable across Windows and Linux, Active Directory and Entra ID, packet analysis and scripting.
+        Currently on a 30-day homelab sprint to deepen practical skills.
       </p>
       <div class="cta-row">
-        <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Email me</a>
+        <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Contact me</a>
         <a class="btn ghost" href="#projects">See my work</a>
-        <a class="btn ghost" href={GITHUB}>GitHub</a>
+        <a class="btn icon" href={GITHUB} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        </a>
+        <a class="btn icon" href={LINKEDIN} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="sprint" aria-labelledby="sprint-h" class="reveal">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="mono">Active challenge</p>
+        <h2 id="sprint-h">30-Day Homelab Sprint</h2>
+        <p>Building, breaking, and documenting one new skill or system per day. Every session gets a writeup.</p>
+      </div>
+      <div class="sprint-card">
+        <div class="sprint-header">
+          <div class="sprint-counter">
+            <div class="sprint-day-num">{HOMELAB_DAY}</div>
+            <div class="sprint-day-label">of {HOMELAB_TOTAL} days</div>
+          </div>
+          <div class="sprint-info">
+            <div class="sprint-title-text">Currently in progress</div>
+            <p class="sprint-desc">Working across network security, DNS filtering, traffic analysis, Docker infrastructure, and Linux automation. Logging everything I build, break, and learn.</p>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style={`width: ${HOMELAB_PCT}%`}></div>
+        </div>
+        {homelabPosts.length > 0 && (
+          <div class="sprint-posts">
+            {homelabPosts.map(post => (
+              <a href={`/blog/${post.id}`} class="sprint-post">
+                <span>{post.data.title}</span>
+                <span class="arrow" aria-hidden="true">&rarr;</span>
+              </a>
+            ))}
+          </div>
+        )}
+        <div class="sprint-more">
+          <a href="/blog" class="mono">View all field notes &rarr;</a>
+        </div>
       </div>
     </div>
   </section>
@@ -77,39 +127,39 @@ const projects = [
       </div>
       <div class="skills-grid">
         <div class="skill-card">
-          <h3>Accounts and access</h3>
+          <h3>Identity and access</h3>
           <ul>
             <li>Active Directory users, groups, and OUs</li>
-            <li>Password resets, lockouts, and unlocks</li>
-            <li>Group Policy</li>
             <li>Microsoft 365 and Entra ID, licenses, MFA</li>
-          </ul>
-        </div>
-        <div class="skill-card">
-          <h3>Support and ticketing</h3>
-          <ul>
-            <li>Service desk workflows and triage</li>
-            <li>Ticket prioritization and SLAs</li>
-            <li>Knowledge base documentation</li>
-            <li>Remote support</li>
+            <li>Group Policy configuration</li>
+            <li>Password policy and lockout remediation</li>
           </ul>
         </div>
         <div class="skill-card">
           <h3>Systems and networking</h3>
           <ul>
-            <li>Windows 10 and 11, Windows Server</li>
-            <li>Linux, Ubuntu and Debian</li>
-            <li>DNS, DHCP, VPN, SSH</li>
-            <li>PowerShell, Bash, Python</li>
+            <li>Windows 10/11, Windows Server</li>
+            <li>Linux — Ubuntu, Debian, server management</li>
+            <li>DNS, DHCP, VPN, SSH, Tailscale</li>
+            <li>Docker, container networking</li>
           </ul>
         </div>
         <div class="skill-card">
-          <h3>People and accessibility</h3>
+          <h3>Security and monitoring</h3>
           <ul>
-            <li>High volume phone and CRM support</li>
-            <li>Clear communication with non technical users</li>
-            <li>NVDA, JAWS, and Orca screen readers</li>
-            <li>Accessibility troubleshooting</li>
+            <li>Wireshark, packet capture, traffic analysis</li>
+            <li>Pi-hole, Unbound, DNS filtering</li>
+            <li>Uptime Kuma, alert pipelines</li>
+            <li>Log analysis and incident documentation</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Scripting and automation</h3>
+          <ul>
+            <li>PowerShell — AD automation and scripting</li>
+            <li>Bash — server management and backups</li>
+            <li>Python — utilities and tooling</li>
+            <li>SLA design and runbook documentation</li>
           </ul>
         </div>
       </div>
@@ -121,7 +171,7 @@ const projects = [
       <div class="sec-head">
         <p class="mono">Built and documented</p>
         <h2 id="projects-h">Projects</h2>
-        <p>Hands on labs that mirror real service desk work. Configs and scripts live on GitHub, full writeups are linked from each.</p>
+        <p>Hands-on lab work across security, infrastructure, and automation. Configs and scripts live on GitHub.</p>
       </div>
       <div class="projects">
         {projects.map((p) => (
@@ -131,8 +181,8 @@ const projects = [
             <p class="what">{p.what}</p>
             <p class="outcome">{p.outcome}</p>
             <div class="links">
-              <a href={GITHUB}>View on GitHub</a>
-              <a href={p.writeup ?? '/blog'}>Read writeup</a>
+              <a href={GITHUB}>GitHub</a>
+              {p.writeup && <a href={p.writeup}>Read writeup</a>}
             </div>
           </article>
         ))}
@@ -143,12 +193,12 @@ const projects = [
   <section id="writeups" aria-labelledby="writeups-h" class="reveal">
     <div class="wrap">
       <div class="sec-head">
-        <p class="mono">Knowledge base</p>
-        <h2 id="writeups-h">Troubleshooting writeups</h2>
-        <p>Short, clear guides for the issues a service desk sees every day. This is where the documentation skill lives.</p>
+        <p class="mono">Field notes</p>
+        <h2 id="writeups-h">Latest writeups</h2>
+        <p>Technical notes from the home lab — what I built, what broke, and what I learned. Sprint updates also posted on LinkedIn.</p>
       </div>
       <ul class="writeups">
-        {posts.map((post) => (
+        {recentPosts.map((post) => (
           <li>
             <a href={`/blog/${post.id}`}>
               <span class="tag">{post.data.category}</span>
@@ -158,52 +208,64 @@ const projects = [
           </li>
         ))}
       </ul>
+      <div class="writeups-footer">
+        <a href={LINKEDIN} target="_blank" rel="noopener noreferrer" class="btn ghost">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="vertical-align:middle;margin-right:7px;flex-shrink:0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Follow on LinkedIn
+        </a>
+        <a href="/blog" class="btn ghost">All writeups</a>
+      </div>
     </div>
   </section>
 
   <section id="experience" aria-labelledby="experience-h" class="reveal">
     <div class="wrap">
       <div class="sec-head">
-        <p class="mono">Where I have worked and practiced</p>
+        <p class="mono">Background</p>
         <h2 id="experience-h">Experience</h2>
       </div>
       <div class="xp">
         <div class="xp-item">
           <div class="top">
-            <h3>Customer Experience (CX) Associate, AnywhereWorks (Remote)</h3>
+            <h3>Customer Experience Associate, AnywhereWorks (Remote)</h3>
             <span class="when">Dec 2024 — Present</span>
           </div>
           <ul>
-            <li>Resolve customer issues in a high volume support environment, aiming for first contact resolution.</li>
+            <li>Resolve customer issues in a high-volume support environment, targeting first-contact resolution.</li>
             <li>Document interactions in CRM software and follow structured escalation processes.</li>
-            <li>Keep a calm, clear manner with frustrated and non technical customers.</li>
+            <li>Maintain clear communication with technically diverse customers under pressure.</li>
           </ul>
         </div>
         <div class="xp-item">
           <div class="top">
-            <h3>IT Support, Self Directed Home Lab</h3>
+            <h3>IT Support, Self-Directed Home Lab</h3>
             <span class="when">2024 — Present</span>
           </div>
           <ul>
-            <li>Run an ongoing home lab to practice real help desk tasks across Windows and Linux, documenting every build and fix.</li>
-            <li>Administer Active Directory and a Microsoft 365 tenant, including password resets, lockouts, and access changes.</li>
-            <li>Operate a multi machine Linux environment with secure remote access, automated backups, and scripting.</li>
+            <li>Run an ongoing home lab across Windows Server, Linux, and cloud services, documenting every build and incident.</li>
+            <li>Administer Active Directory and Microsoft 365, including identity lifecycle management and access controls.</li>
+            <li>Operate a multi-machine Linux environment with secure remote access, monitoring, and scripted automation.</li>
           </ul>
         </div>
       </div>
-      <p class="note">CompTIA Network+ in progress, target July 2026. Kofa High School.</p>
     </div>
   </section>
 
   <section id="contact" aria-labelledby="contact-h" style="border-bottom:none;">
     <div class="wrap">
       <div class="contact-box">
-        <h2 id="contact-h">Let's talk about your service desk</h2>
-        <p>Open to help desk and service desk roles, remote or in the Phoenix area. The fastest way to reach me is email or phone.</p>
-        <div class="contact-links">
-          <a href="mailto:fernstaedtmarco@gmail.com">fernstaedtmarco@gmail.com</a>
-          <a href="tel:+19282569277">928 256 9277</a>
-          <a href={GITHUB}>github.com/marcofernstaedt</a>
+        <h2 id="contact-h">Open to the right opportunity</h2>
+        <p>Targeting roles in cybersecurity and DevOps engineering. Remote or Phoenix, AZ. Let's connect.</p>
+        <div class="contact-actions">
+          <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Contact me</a>
+        </div>
+        <div class="social-links">
+          <a href={LINKEDIN} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+          <a href={GITHUB} target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="social-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
         </div>
       </div>
     </div>
