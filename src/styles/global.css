@@ -118,6 +118,9 @@ section { padding: 70px 0; border-bottom: 1px solid var(--line); }
 .projects { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
 .project { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 26px; display: flex; flex-direction: column; }
 .project h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.3rem; margin: 10px 0 6px; }
+.project .stack { font-family: "IBM Plex Mono", monospace; color: var(--accent); font-size: 0.78rem; line-height: 1.5; margin-bottom: 12px; }
+.dev-project { border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); box-shadow: 0 12px 34px rgba(0,0,0,0.16); }
+.dev-project .outcome { border-left-color: var(--signal); }
 .project .what { color: var(--ink-soft); font-size: 0.96rem; margin-bottom: 14px; flex-grow: 1; }
 .project .outcome { font-size: 0.9rem; padding: 10px 14px; background: var(--card-tint); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 16px; }
 .project .links { display: flex; gap: 16px; }

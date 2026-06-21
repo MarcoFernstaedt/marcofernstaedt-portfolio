@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
+const indexPage = fs.readFileSync(path.join(root, 'src/pages/index.astro'), 'utf8');
+const header = fs.readFileSync(path.join(root, 'src/components/Header.astro'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'src/styles/global.css'), 'utf8');
 const baseLayout = fs.readFileSync(path.join(root, 'src/layouts/BaseLayout.astro'), 'utf8');
 const visitorCollector = fs.readFileSync(path.join(root, 'scripts/private-visitor-log-collector.py'), 'utf8');
@@ -33,6 +35,28 @@ function frontmatterValue(frontmatter, key) {
 
 assert(packageJson.scripts?.build, 'package.json must keep a build script');
 assert(packageJson.scripts?.test === 'node tests/site-contract.mjs', 'npm test must run the site contract');
+
+for (const marker of [
+  'Developer portfolio / Phoenix, Arizona',
+  'Full stack projects with infrastructure discipline.',
+  'id="dev-projects"',
+  'Featured software projects',
+  'AI Image to Audio',
+  'Saguaro Blossoms Client Website',
+  'Realtime Messaging Platform',
+  'Code Interview Platform',
+  'https://github.com/MarcoFernstaedt/image_accessibility_tool',
+  'https://ita-orpin.vercel.app',
+  'https://github.com/MarcoFernstaedt/cynthia-tutoring-platform',
+  'https://saguaroblossomslearningservices.com',
+  'https://github.com/MarcoFernstaedt/socketio_chat_app',
+  'https://github.com/MarcoFernstaedt/code_live_platform',
+  'React, Next.js, TypeScript, Node.js, APIs',
+]) {
+  assert(indexPage.includes(marker), `Developer portfolio must include ${marker}`);
+}
+assert(header.includes("/#dev-projects") && header.includes('Dev Projects'), 'Header must put developer projects in the main nav');
+assert(indexPage.indexOf('id="dev-projects"') < indexPage.indexOf('id="sprint"'), 'Developer projects must appear before the homelab sprint');
 
 const revealBlock = css.match(/\.reveal\s*\{[^}]*\}/s)?.[0] ?? '';
 assert(revealBlock, 'global.css must define .reveal');
