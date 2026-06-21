@@ -30,7 +30,7 @@ ALLOWED_ORIGINS = {
     "https://marcofernstaedt-portfolio.vercel.app",
 }
 
-# Additional browser-provided fields. Still privacy-safe: no raw IPs, no secrets, no keystrokes.
+# Additional browser-provided fields. Private local analytics only: no secrets, no keystrokes.
 EXTRA_COLUMNS = {
     "url": "TEXT",
     "search": "TEXT",
@@ -67,6 +67,7 @@ EXTRA_COLUMNS = {
     "utm_source": "TEXT",
     "utm_medium": "TEXT",
     "utm_campaign": "TEXT",
+    "raw_ip": "TEXT",
 }
 
 
@@ -165,6 +166,9 @@ def extra_from_query(qs: dict[str, list[str]]) -> list[str | None]:
     numeric_fields = {"scroll_depth_pct", "time_on_page_ms", "page_height", "timezone_offset", "history_length"}
     values = []
     for column in EXTRA_COLUMNS:
+        if column == "raw_ip":
+            values.append(None)
+            continue
         value = first_query(qs, column, limits.get(column, 200))
         if column in numeric_fields and value is not None:
             value = ''.join(ch for ch in value if ch.isdigit() or ch == '-')[:40] or None
@@ -177,6 +181,9 @@ def extra_from_payload(payload: dict) -> list[str | None]:
     numeric_fields = {"scroll_depth_pct", "time_on_page_ms", "page_height", "timezone_offset", "history_length"}
     values = []
     for column in EXTRA_COLUMNS:
+        if column == "raw_ip":
+            values.append(None)
+            continue
         value = payload_value(payload, column, limits.get(column, 200))
         if column in numeric_fields and value is not None:
             value = ''.join(ch for ch in value if ch.isdigit() or ch == '-')[:40] or None
@@ -299,6 +306,7 @@ def visitor_summary(row: dict[str, str | int | None]) -> str:
         f"Referrer: {truncate(row.get('referrer'), 500) or 'direct/unknown'}",
         f"Browser: {short_user_agent(truncate(row.get('user_agent'), 500))}",
         f"Region: {region}",
+        f"Raw IP: {truncate(row.get('raw_ip'), 80) or 'unknown'}",
         f"Language: {truncate(row.get('language'), 80) or 'unknown'}",
         f"TZ: {truncate(row.get('timezone'), 120) or 'unknown'}",
         f"Screen: {truncate(row.get('screen'), 80) or truncate(row.get('viewport'), 80) or 'unknown'}",
@@ -397,6 +405,7 @@ class Handler(BaseHTTPRequestHandler):
                 "visitor_id": first_query(qs, "visitorId", 120),
                 "owner_mark": 1 if (qs.get("owner") or [""])[0] == "1" else 0,
                 "ip_hash": hash_ip(ip),
+                "raw_ip": truncate(ip, 80),
                 "country": truncate(self.headers.get("X-Vercel-IP-Country"), 80),
                 "region": truncate(self.headers.get("X-Vercel-IP-Country-Region"), 80),
                 "city": truncate(self.headers.get("X-Vercel-IP-City"), 120),
@@ -408,7 +417,7 @@ class Handler(BaseHTTPRequestHandler):
                 "screen": first_query(qs, "screen", 80),
                 "timezone": first_query(qs, "timezone", 120),
                 "source_origin": truncate(self.headers.get("Referer") or self.headers.get("Origin"), 200),
-                **dict(zip(EXTRA_COLUMNS.keys(), extra_from_query(qs))),
+                **(lambda extras: {**extras, "raw_ip": truncate(ip, 80)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_query(qs)))),
             }
             with db() as conn:
                 insert_visit(conn, row)
@@ -485,7 +494,7 @@ class Handler(BaseHTTPRequestHandler):
             "screen": payload_value(payload, "screen", 80),
             "timezone": payload_value(payload, "timezone", 120),
             "source_origin": truncate(self.headers.get("Origin"), 200),
-            **dict(zip(EXTRA_COLUMNS.keys(), extra_from_payload(payload))),
+            **(lambda extras: {**extras, "raw_ip": truncate(ip, 80)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_payload(payload)))),
         }
         with db() as conn:
             insert_visit(conn, row)

@@ -121,7 +121,8 @@ assert(/def send_ntfy_notification\(/.test(visitorCollector), 'Visitor collector
 assert(/timeout=3/.test(visitorCollector), 'Visitor collector ntfy requests must have a hard 3 second timeout');
 assert(/except Exception/.test(visitorCollector) && /send_ntfy_notification/.test(visitorCollector), 'Visitor collector must catch ntfy failures so logging still succeeds');
 assert(/owner_mark/.test(visitorCollector) && /VISITOR_LOG_NOTIFY_OWNER/.test(visitorCollector), 'Visitor collector must support owner notification suppression');
-assert(!/raw_ip|client_ip\([^\n]+\).*message|ip:\s*\{ip\}/i.test(visitorCollector), 'Visitor collector notification body must not include raw IPs');
+assert(/"raw_ip": "TEXT"/.test(visitorCollector), 'Visitor collector must store raw IP privately when Marco explicitly enables it');
+assert(/"raw_ip": truncate\(ip, 80\)/.test(visitorCollector), 'Raw IP must come from request headers or socket address, not browser-supplied query data');
 
 const posts = readMarkdownPosts(blogDir);
 const published = posts.filter((post) => frontmatterValue(post.frontmatter, 'draft') !== 'true');
