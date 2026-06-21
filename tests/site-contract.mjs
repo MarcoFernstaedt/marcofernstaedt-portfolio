@@ -85,9 +85,24 @@ for (const field of [
   'device_memory',
   'hardware_concurrency',
   'page_load_ms',
+  'event_type',
+  'landing_path',
+  'previous_path',
+  'scroll_depth_pct',
+  'time_on_page_ms',
+  'page_height',
+  'orientation',
+  'timezone_offset',
+  'history_length',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
 ]) {
   assert(baseLayout.includes(field), `Custom visitor beacon must collect ${field}`);
 }
+assert(/sendVisit\('page_view'\)/.test(baseLayout), 'Visitor beacon must send a page_view event');
+assert(/sendVisit\('page_exit'\)/.test(baseLayout), 'Visitor beacon must send a page_exit event');
+assert(/visibilitychange/.test(baseLayout) && /pagehide/.test(baseLayout), 'Visitor beacon must record exits when the visitor leaves the page');
 
 for (const envName of [
   'VISITOR_LOG_NTFY_URL',

@@ -55,6 +55,18 @@ EXTRA_COLUMNS = {
     "page_load_ms": "TEXT",
     "session_id": "TEXT",
     "visit_count": "TEXT",
+    "event_type": "TEXT",
+    "landing_path": "TEXT",
+    "previous_path": "TEXT",
+    "scroll_depth_pct": "TEXT",
+    "time_on_page_ms": "TEXT",
+    "page_height": "TEXT",
+    "orientation": "TEXT",
+    "timezone_offset": "TEXT",
+    "history_length": "TEXT",
+    "utm_source": "TEXT",
+    "utm_medium": "TEXT",
+    "utm_campaign": "TEXT",
 }
 
 
@@ -150,12 +162,26 @@ def payload_value(payload: dict, key: str, limit: int = 500) -> str | None:
 
 def extra_from_query(qs: dict[str, list[str]]) -> list[str | None]:
     limits = {"url": 1000, "referrer": 1000}
-    return [first_query(qs, column, limits.get(column, 200)) for column in EXTRA_COLUMNS]
+    numeric_fields = {"scroll_depth_pct", "time_on_page_ms", "page_height", "timezone_offset", "history_length"}
+    values = []
+    for column in EXTRA_COLUMNS:
+        value = first_query(qs, column, limits.get(column, 200))
+        if column in numeric_fields and value is not None:
+            value = ''.join(ch for ch in value if ch.isdigit() or ch == '-')[:40] or None
+        values.append(value)
+    return values
 
 
 def extra_from_payload(payload: dict) -> list[str | None]:
     limits = {"url": 1000, "referrer": 1000}
-    return [payload_value(payload, column, limits.get(column, 200)) for column in EXTRA_COLUMNS]
+    numeric_fields = {"scroll_depth_pct", "time_on_page_ms", "page_height", "timezone_offset", "history_length"}
+    values = []
+    for column in EXTRA_COLUMNS:
+        value = payload_value(payload, column, limits.get(column, 200))
+        if column in numeric_fields and value is not None:
+            value = ''.join(ch for ch in value if ch.isdigit() or ch == '-')[:40] or None
+        values.append(value)
+    return values
 
 
 def client_ip(headers, address) -> str:
@@ -266,13 +292,18 @@ def visitor_summary(row: dict[str, str | int | None]) -> str:
     region = ", ".join(part for part in region_parts if part) or "unknown"
     lines = [
         f"Owner: {owner}",
+        f"Event: {truncate(row.get('event_type'), 80) or 'page_view'}",
         f"Path: {truncate(row.get('path'), 500) or '/'}",
+        f"Landing: {truncate(row.get('landing_path'), 500) or 'unknown'}",
+        f"Previous: {truncate(row.get('previous_path'), 500) or 'none'}",
         f"Referrer: {truncate(row.get('referrer'), 500) or 'direct/unknown'}",
         f"Browser: {short_user_agent(truncate(row.get('user_agent'), 500))}",
         f"Region: {region}",
         f"Language: {truncate(row.get('language'), 80) or 'unknown'}",
         f"TZ: {truncate(row.get('timezone'), 120) or 'unknown'}",
         f"Screen: {truncate(row.get('screen'), 80) or truncate(row.get('viewport'), 80) or 'unknown'}",
+        f"Scroll: {truncate(row.get('scroll_depth_pct'), 40) or 'unknown'}%",
+        f"Time on page: {truncate(row.get('time_on_page_ms'), 40) or 'unknown'} ms",
         f"Visitor: {visitor}",
         f"Session: {truncate(row.get('session_id'), 16) or 'unknown'}",
         f"Visit count: {truncate(row.get('visit_count'), 40) or 'unknown'}",

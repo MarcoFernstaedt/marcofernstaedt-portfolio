@@ -74,43 +74,94 @@ const { title, description = 'IT professional in Phoenix, Arizona, building towa
           var pageLoadMs = navigationEntry && navigationEntry.loadEventEnd
             ? Math.round(navigationEntry.loadEventEnd).toString()
             : '';
-          var query = new URLSearchParams({
-            visitorId: visitorId,
-            session_id: sessionId,
-            visit_count: String(visitCount),
-            owner: localStorage.getItem(ownerKey) === '1' ? '1' : '0',
-            url: window.location.href,
-            path: window.location.pathname,
-            search: window.location.search,
-            hash: window.location.hash,
-            referrer: document.referrer || '',
-            title: document.title,
-            language: navigator.language || '',
-            screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : '',
-            viewport: String(window.innerWidth) + 'x' + String(window.innerHeight),
-            color_depth: window.screen ? String(window.screen.colorDepth || '') : '',
-            pixel_ratio: String(window.devicePixelRatio || ''),
-            touch_points: String(navigator.maxTouchPoints || 0),
-            platform: navigator.platform || '',
-            vendor: navigator.vendor || '',
-            cookies_enabled: String(navigator.cookieEnabled),
-            do_not_track: navigator.doNotTrack || window.doNotTrack || '',
-            online: String(navigator.onLine),
-            connection_type: connection.effectiveType || connection.type || '',
-            connection_downlink: connection.downlink ? String(connection.downlink) : '',
-            connection_rtt: connection.rtt ? String(connection.rtt) : '',
-            save_data: connection.saveData ? '1' : '0',
-            device_memory: navigator.deviceMemory ? String(navigator.deviceMemory) : '',
-            hardware_concurrency: navigator.hardwareConcurrency ? String(navigator.hardwareConcurrency) : '',
-            nav_type: navigationEntry ? String(navigationEntry.type || '') : '',
-            visibility_state: document.visibilityState || '',
-            page_load_ms: pageLoadMs,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-            cache: Date.now().toString(36)
+          var landingKey = 'marco_site_landing_path';
+          var previousPathKey = 'marco_site_previous_path';
+          var landingPath = sessionStorage.getItem(landingKey);
+          if (!landingPath) {
+            landingPath = window.location.pathname;
+            sessionStorage.setItem(landingKey, landingPath);
+          }
+          var previousPath = localStorage.getItem(previousPathKey) || '';
+          localStorage.setItem(previousPathKey, window.location.pathname);
+          var startedAt = Date.now();
+          var maxScrollPct = 0;
+          function currentScrollPct() {
+            var doc = document.documentElement;
+            var body = document.body;
+            var scrollTop = window.pageYOffset || doc.scrollTop || body.scrollTop || 0;
+            var scrollHeight = Math.max(body.scrollHeight || 0, doc.scrollHeight || 0, body.offsetHeight || 0, doc.offsetHeight || 0);
+            var viewportHeight = window.innerHeight || doc.clientHeight || 0;
+            var denom = Math.max(1, scrollHeight - viewportHeight);
+            return Math.max(0, Math.min(100, Math.round((scrollTop / denom) * 100)));
+          }
+          function refreshScroll() {
+            maxScrollPct = Math.max(maxScrollPct, currentScrollPct());
+          }
+          window.addEventListener('scroll', refreshScroll, { passive: true });
+          var urlParams = new URLSearchParams(window.location.search);
+          function sendVisit(eventType) {
+            refreshScroll();
+            var query = new URLSearchParams({
+              visitorId: visitorId,
+              session_id: sessionId,
+              visit_count: String(visitCount),
+              event_type: eventType,
+              owner: localStorage.getItem(ownerKey) === '1' ? '1' : '0',
+              url: window.location.href,
+              path: window.location.pathname,
+              landing_path: landingPath,
+              previous_path: previousPath,
+              search: window.location.search,
+              hash: window.location.hash,
+              referrer: document.referrer || '',
+              title: document.title,
+              language: navigator.language || '',
+              screen: window.screen ? String(window.screen.width) + 'x' + String(window.screen.height) : '',
+              viewport: String(window.innerWidth) + 'x' + String(window.innerHeight),
+              page_height: String(Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0)),
+              orientation: window.screen && window.screen.orientation ? String(window.screen.orientation.type || '') : '',
+              timezone_offset: String(new Date().getTimezoneOffset()),
+              color_depth: window.screen ? String(window.screen.colorDepth || '') : '',
+              pixel_ratio: String(window.devicePixelRatio || ''),
+              touch_points: String(navigator.maxTouchPoints || 0),
+              platform: navigator.platform || '',
+              vendor: navigator.vendor || '',
+              cookies_enabled: String(navigator.cookieEnabled),
+              do_not_track: navigator.doNotTrack || window.doNotTrack || '',
+              online: String(navigator.onLine),
+              connection_type: connection.effectiveType || connection.type || '',
+              connection_downlink: connection.downlink ? String(connection.downlink) : '',
+              connection_rtt: connection.rtt ? String(connection.rtt) : '',
+              save_data: connection.saveData ? '1' : '0',
+              device_memory: navigator.deviceMemory ? String(navigator.deviceMemory) : '',
+              hardware_concurrency: navigator.hardwareConcurrency ? String(navigator.hardwareConcurrency) : '',
+              nav_type: navigationEntry ? String(navigationEntry.type || '') : '',
+              visibility_state: document.visibilityState || '',
+              page_load_ms: pageLoadMs,
+              scroll_depth_pct: String(maxScrollPct),
+              time_on_page_ms: String(Math.max(0, Date.now() - startedAt)),
+              history_length: String(window.history ? window.history.length : ''),
+              utm_source: urlParams.get('utm_source') || '',
+              utm_medium: urlParams.get('utm_medium') || '',
+              utm_campaign: urlParams.get('utm_campaign') || '',
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+              cache: Date.now().toString(36)
+            });
+            var pixel = new Image(1, 1);
+            pixel.referrerPolicy = 'origin-when-cross-origin';
+            pixel.src = endpoint + '?' + query.toString();
+          }
+          sendVisit('page_view');
+          var sentExit = false;
+          function sendExit() {
+            if (sentExit) return;
+            sentExit = true;
+            sendVisit('page_exit');
+          }
+          document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') sendExit();
           });
-          var pixel = new Image(1, 1);
-          pixel.referrerPolicy = 'origin-when-cross-origin';
-          pixel.src = endpoint + '?' + query.toString();
+          window.addEventListener('pagehide', sendExit);
         } catch (e) {}
       })();
     </script>
