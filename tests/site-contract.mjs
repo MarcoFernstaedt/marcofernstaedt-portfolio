@@ -56,6 +56,15 @@ for (const marker of [
   assert(indexPage.includes(marker), `Developer portfolio must include ${marker}`);
 }
 assert(header.includes("/#dev-projects") && header.includes('Dev Projects'), 'Header must put developer projects in the main nav');
+assert(header.includes("href: 'mailto:fernstaedtmarco@gmail.com'") && header.includes("label: 'Contact'"), 'Header Contact must open an email compose window');
+for (const marker of [
+  '<a class="btn icon" href={GITHUB} target="_blank" rel="noopener noreferrer" aria-label="GitHub">',
+  '<a class="btn icon" href={LINKEDIN} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">',
+  '<a href={LINKEDIN} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-icon">',
+  '<a href={GITHUB} target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="social-icon">',
+]) {
+  assert(indexPage.includes(marker), `Social icon link must open in a new tab: ${marker}`);
+}
 assert(indexPage.indexOf('id="dev-projects"') < indexPage.indexOf('id="sprint"'), 'Developer projects must appear before the homelab sprint');
 
 const revealBlock = css.match(/\.reveal\s*\{[^}]*\}/s)?.[0] ?? '';
