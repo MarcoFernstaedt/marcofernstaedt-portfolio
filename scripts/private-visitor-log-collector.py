@@ -9,9 +9,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import sqlite3
+import subprocess
 import time
 import urllib.request
 import urllib.error
@@ -68,6 +70,21 @@ EXTRA_COLUMNS = {
     "utm_medium": "TEXT",
     "utm_campaign": "TEXT",
     "raw_ip": "TEXT",
+    "owner_reason": "TEXT",
+    "host_header": "TEXT",
+    "accept_language_header": "TEXT",
+    "x_forwarded_for": "TEXT",
+    "x_real_ip": "TEXT",
+    "cf_connecting_ip": "TEXT",
+    "fly_client_ip": "TEXT",
+}
+
+DEFAULT_OWNER_TAILSCALE_HOSTS = {
+    "srv1522777",          # VPS
+    "pi5",                 # Pi 5
+    "desktop-et9qj57",     # HP / desktop node currently seen in tailnet
+    "deviceb",             # Windows handheld / deck-class node currently seen in tailnet
+    "localhost",           # Marco's iPhone currently seen in tailnet
 }
 
 
@@ -200,6 +217,80 @@ def client_ip(headers, address) -> str:
     return address[0]
 
 
+def config_list(name: str) -> list[str]:
+    raw = CONFIG.get(name, "")
+    return [part.strip() for part in raw.replace("\n", ",").split(",") if part.strip()]
+
+
+def parse_ip(value: str | None):
+    if not value:
+        return None
+    try:
+        return ipaddress.ip_address(value.strip())
+    except ValueError:
+        return None
+
+
+def owner_tailnet_ips() -> set[str]:
+    """Return Tailscale IPs for Marco-owned devices without hard-coding public IPs."""
+    configured_hosts = {host.lower() for host in config_list("VISITOR_LOG_OWNER_TAILSCALE_HOSTS")}
+    hosts = configured_hosts or DEFAULT_OWNER_TAILSCALE_HOSTS
+    ips = {str(parsed) for value in config_list("VISITOR_LOG_OWNER_IPS") if (parsed := parse_ip(value))}
+    try:
+        result = subprocess.run(
+            ["tailscale", "status", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if result.returncode != 0 or not result.stdout:
+            return ips
+        data = json.loads(result.stdout)
+        devices = [data.get("Self", {}), *((data.get("Peer") or {}).values())]
+        for device in devices:
+            host = (device.get("HostName") or device.get("DNSName") or "").strip().lower().rstrip(".")
+            if not host or host == "funnel-ingress-node":
+                continue
+            short_host = host.split(".", 1)[0]
+            if short_host in hosts or host in hosts:
+                for addr in device.get("TailscaleIPs") or []:
+                    parsed = parse_ip(addr)
+                    if parsed:
+                        ips.add(str(parsed))
+    except Exception:
+        pass
+    return ips
+
+
+def owner_classification(headers, address, explicit_owner: bool = False) -> tuple[int, str]:
+    if explicit_owner:
+        return 1, "owner_marker"
+    candidates = [client_ip(headers, address)]
+    for header in ["X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP", "Fly-Client-IP"]:
+        value = headers.get(header)
+        if value:
+            candidates.extend(part.strip() for part in value.split(",") if part.strip())
+    owner_ips = owner_tailnet_ips()
+    for candidate in candidates:
+        parsed = parse_ip(candidate)
+        if parsed and str(parsed) in owner_ips:
+            return 1, "owner_tailscale_ip"
+    return 0, "external_visitor"
+
+
+def request_header_extras(headers, owner_reason: str) -> dict[str, str | None]:
+    return {
+        "owner_reason": owner_reason,
+        "host_header": truncate(headers.get("Host"), 200),
+        "accept_language_header": truncate(headers.get("Accept-Language"), 300),
+        "x_forwarded_for": truncate(headers.get("X-Forwarded-For"), 500),
+        "x_real_ip": truncate(headers.get("X-Real-IP"), 200),
+        "cf_connecting_ip": truncate(headers.get("CF-Connecting-IP"), 200),
+        "fly_client_ip": truncate(headers.get("Fly-Client-IP"), 200),
+    }
+
+
 def config_bool(name: str, default: bool) -> bool:
     value = CONFIG.get(name)
     if value is None or value == "":
@@ -221,7 +312,6 @@ def ntfy_config() -> dict[str, str]:
         "user": CONFIG.get("VISITOR_LOG_NTFY_USER", ""),
         "password": CONFIG.get("VISITOR_LOG_NTFY_PASSWORD", ""),
     }
-
 
 def notification_key(row: dict[str, str | int | None]) -> str:
     visitor_id = truncate(row.get("visitor_id"), 120)
@@ -316,6 +406,7 @@ def visitor_summary(row: dict[str, str | int | None]) -> str:
         f"Session: {truncate(row.get('session_id'), 16) or 'unknown'}",
         f"Visit count: {truncate(row.get('visit_count'), 40) or 'unknown'}",
         f"Time: {truncate(row.get('ts_utc'), 80) or now_utc()}",
+        f"Classification: {truncate(row.get('owner_reason'), 80) or 'unknown'}",
     ]
     return "\n".join(lines)
 
@@ -399,11 +490,16 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path in {"/pixel", "/visit.gif"}:
             qs = parse_qs(parsed.query)
             ip = client_ip(self.headers, self.client_address)
+            owner_mark, owner_reason = owner_classification(
+                self.headers,
+                self.client_address,
+                explicit_owner=(qs.get("owner") or [""])[0] == "1",
+            )
             row = {
                 "ts_utc": now_utc(),
                 "received_ms": int(time.time() * 1000),
                 "visitor_id": first_query(qs, "visitorId", 120),
-                "owner_mark": 1 if (qs.get("owner") or [""])[0] == "1" else 0,
+                "owner_mark": owner_mark,
                 "ip_hash": hash_ip(ip),
                 "raw_ip": truncate(ip, 80),
                 "country": truncate(self.headers.get("X-Vercel-IP-Country"), 80),
@@ -417,7 +513,7 @@ class Handler(BaseHTTPRequestHandler):
                 "screen": first_query(qs, "screen", 80),
                 "timezone": first_query(qs, "timezone", 120),
                 "source_origin": truncate(self.headers.get("Referer") or self.headers.get("Origin"), 200),
-                **(lambda extras: {**extras, "raw_ip": truncate(ip, 80)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_query(qs)))),
+                **(lambda extras: {**extras, "raw_ip": truncate(ip, 80), **request_header_extras(self.headers, owner_reason)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_query(qs)))),
             }
             with db() as conn:
                 insert_visit(conn, row)
@@ -476,7 +572,11 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         ip = client_ip(self.headers, self.client_address)
-        owner_mark = 1 if payload.get("owner") is True else 0
+        owner_mark, owner_reason = owner_classification(
+            self.headers,
+            self.client_address,
+            explicit_owner=payload.get("owner") is True,
+        )
         row = {
             "ts_utc": now_utc(),
             "received_ms": int(time.time() * 1000),
@@ -494,7 +594,7 @@ class Handler(BaseHTTPRequestHandler):
             "screen": payload_value(payload, "screen", 80),
             "timezone": payload_value(payload, "timezone", 120),
             "source_origin": truncate(self.headers.get("Origin"), 200),
-            **(lambda extras: {**extras, "raw_ip": truncate(ip, 80)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_payload(payload)))),
+            **(lambda extras: {**extras, "raw_ip": truncate(ip, 80), **request_header_extras(self.headers, owner_reason)})(dict(zip(EXTRA_COLUMNS.keys(), extra_from_payload(payload)))),
         }
         with db() as conn:
             insert_visit(conn, row)
