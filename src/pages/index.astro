@@ -18,14 +18,6 @@ const HOMELAB_PCT = Math.round((HOMELAB_DAY / HOMELAB_TOTAL) * 100);
 
 const devProjects = [
   {
-    tag: 'IT tooling',
-    title: 'Cabinet Support Console',
-    stack: 'C# Windows agent, Node/TypeScript server, SQL Server, mutual-TLS enrollment, Tailscale',
-    what: 'A support platform for a fleet of Windows cabinets: an agent inventories hardware, services, drivers, updates and event logs, the server queues approved diagnostics, and the console shows what each machine reported.',
-    outcome: 'Built for secure remote support: the agent runs only operations from a fixed catalog, every result is re-validated on the server, enrollment is approved by an administrator, and nothing connects inbound to the cabinet.',
-    demo: '/console',
-  },
-  {
     tag: 'AI / Full stack',
     title: 'AI Image to Audio',
     stack: 'Next.js, TypeScript, OpenAI Vision, OpenAI TTS, Vercel',
@@ -133,7 +125,7 @@ const projects = [
       <div class="sec-head">
         <p class="mono">Developer proof</p>
         <h2 id="dev-projects-h">Featured software projects</h2>
-        <p>Five focused projects for developer applications. They show deployed products, frontend and backend work, API integration, authentication, realtime systems, and production QA.</p>
+        <p>Four focused projects for developer applications. They show deployed products, frontend and backend work, API integration, authentication, realtime systems, and production QA.</p>
       </div>
       <div class="projects dev-projects">
         {devProjects.map((p) => (
@@ -144,7 +136,7 @@ const projects = [
             <p class="what">{p.what}</p>
             <p class="outcome">{p.outcome}</p>
             <div class="links">
-              {p.github && <a href={p.github} target="_blank" rel="noopener noreferrer">GitHub</a>}
+              <a href={p.github} target="_blank" rel="noopener noreferrer">GitHub</a>
               {p.demo && <a href={p.demo} target="_blank" rel="noopener noreferrer">Live demo</a>}
             </div>
           </article>
