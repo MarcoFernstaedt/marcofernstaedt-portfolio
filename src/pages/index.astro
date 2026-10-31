@@ -18,6 +18,22 @@ const HOMELAB_PCT = Math.round((HOMELAB_DAY / HOMELAB_TOTAL) * 100);
 
 const devProjects = [
   {
+    tag: 'AI / Decision support',
+    title: 'Source-Aware Intelligence Hub',
+    stack: 'Python, FastAPI, React, TypeScript, Vite, pytest, mypy, ruff',
+    what: 'A full-stack decision-support demo where the reliability of every record is part of the interface: one recommended outcome grounded in named sources, two ranked alternatives, an exception-first queue, and explicit live, scheduled, stale, unavailable, and conflicting states.',
+    outcome: 'The ranking service sits outside the route handlers, the read-only API contract rejects unexpected fields, the threat model is written down, and a verification suite gates formatting, types, tests, and the production build.',
+    github: 'https://github.com/MarcoFernstaedt/source-aware-intelligence-hub',
+  },
+  {
+    tag: 'Agent infrastructure',
+    title: 'Scheduled agent operations platform',
+    stack: 'Python, Linux, Windows, encrypted mesh networking, OAuth APIs, local speech synthesis',
+    what: 'An AI agent run as a monitored service instead of a chat window: scheduled briefs and digests, consent-based mail and calendar access, reproducible chat-channel operations, and narration rendered locally on the server.',
+    outcome: 'Watchdog restarts plus end-to-end delivery checks, under a standing evidence rule: no claim without a source, no number without a command that printed it, and silence instead of a guess.',
+    writeup: '/blog/agent-as-infrastructure',
+  },
+  {
     tag: 'AI / Full stack',
     title: 'AI Image to Audio',
     stack: 'Next.js, TypeScript, OpenAI Vision, OpenAI TTS, Vercel',
@@ -100,10 +116,11 @@ const projects = [
     <div class="wrap">
       <p class="mono">Developer portfolio / Phoenix, Arizona</p>
       <h1 id="hero-name">Full stack projects with infrastructure discipline.</h1>
-      <p class="role">React, Next.js, TypeScript, Node.js, APIs, and deployed products</p>
+      <p class="role">React, Next.js, TypeScript, Node.js, APIs, Python automation, and deployed products</p>
       <p class="intro">
-        I build practical web applications and document the systems behind them.
-        My strongest work combines frontend polish, backend APIs, production deployment, and the troubleshooting habits from a live homelab.
+        I build practical web applications, then run and document the systems behind them.
+        My strongest work combines frontend polish, backend APIs, production deployment, automated verification, and the troubleshooting habits from a live homelab.
+        Lately that means AI agent systems: scheduled services with real credentials, real deliverables, and written rules about what they are allowed to claim.
         For developer roles, start with the featured software projects below.
       </p>
       <div class="cta-row">
@@ -125,7 +142,7 @@ const projects = [
       <div class="sec-head">
         <p class="mono">Developer proof</p>
         <h2 id="dev-projects-h">Featured software projects</h2>
-        <p>Four focused projects for developer applications. They show deployed products, frontend and backend work, API integration, authentication, realtime systems, and production QA.</p>
+        <p>Six focused projects for developer applications. They show deployed products, frontend and backend work, API integration, authentication, realtime systems, automated verification, and production QA.</p>
       </div>
       <div class="projects dev-projects">
         {devProjects.map((p) => (
@@ -136,8 +153,9 @@ const projects = [
             <p class="what">{p.what}</p>
             <p class="outcome">{p.outcome}</p>
             <div class="links">
-              <a href={p.github} target="_blank" rel="noopener noreferrer">GitHub</a>
+              {p.github && <a href={p.github} target="_blank" rel="noopener noreferrer">GitHub</a>}
               {p.demo && <a href={p.demo} target="_blank" rel="noopener noreferrer">Live demo</a>}
+              {p.writeup && <a href={p.writeup}>Read writeup</a>}
             </div>
           </article>
         ))}
@@ -148,9 +166,9 @@ const projects = [
   <section id="sprint" aria-labelledby="sprint-h" class="reveal">
     <div class="wrap">
       <div class="sec-head">
-        <p class="mono">Active challenge</p>
-        <h2 id="sprint-h">30-Day Homelab Sprint</h2>
-        <p>Building, breaking, and documenting one new skill or system per day. Every session gets a writeup.</p>
+        <p class="mono">Homelab build log</p>
+        <h2 id="sprint-h">Homelab sprint and field notes</h2>
+        <p>Five documented sessions building, breaking, and writing up one system at a time. The notes stayed; the daily counter did not.</p>
       </div>
       <div class="sprint-card">
         <div class="sprint-header">
@@ -159,7 +177,7 @@ const projects = [
             <div class="sprint-day-label">of {HOMELAB_TOTAL} days</div>
           </div>
           <div class="sprint-info">
-            <div class="sprint-title-text">Currently in progress</div>
+            <div class="sprint-title-text">Paused after five sessions</div>
             <p class="sprint-desc">Working across network security, DNS filtering, traffic analysis, Docker infrastructure, and Linux automation. Logging everything I build, break, and learn.</p>
           </div>
         </div>
@@ -285,8 +303,8 @@ const projects = [
   <section id="contact" aria-labelledby="contact-h" style="border-bottom:none;">
     <div class="wrap">
       <div class="contact-box">
-        <h2 id="contact-h">IT professional engineer</h2>
-        <p>Positioned for IT professional engineer roles where software delivery, infrastructure troubleshooting, automation, and production ownership matter. Remote or Phoenix, AZ. Let's connect.</p>
+        <h2 id="contact-h">Software engineering, systems, and automation</h2>
+        <p>Open to roles where software delivery, infrastructure troubleshooting, automation, and production ownership matter — software engineering, support engineering, or IT systems work. Remote or Phoenix, AZ. Let's connect.</p>
         <div class="contact-actions">
           <a class="btn primary" href="mailto:fernstaedtmarco@gmail.com">Contact me</a>
         </div>
